@@ -1,0 +1,5 @@
+.claude/
+design-system/
+node_modules/
+package.json
+package-lock.json
