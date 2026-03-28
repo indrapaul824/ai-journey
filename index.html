@@ -4,626 +4,471 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI: Sand to Agents</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>◆</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Work+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --void:#0a0a0f;--surface:#10111a;--card:#14151f;--elevated:#1a1b28;--border:#222336;
-  --text:#e2e4f0;--text-2:#8b8fa8;--text-3:#4e5168;
-  --green:#00ff88;--blue:#3b82f6;--purple:#a855f7;--amber:#f59e0b;--red:#ff3366;--cyan:#00d4ff;
-  --glow-green:0 0 20px rgba(0,255,136,.15);--glow-blue:0 0 20px rgba(59,130,246,.15);
-  --glow-purple:0 0 20px rgba(168,85,247,.15);--glow-amber:0 0 20px rgba(245,158,11,.15);
-  --glow-red:0 0 20px rgba(255,51,102,.15);--glow-cyan:0 0 20px rgba(0,212,255,.15);
-  --radius:10px;--transition:all .2s ease;
+  --bg:#fafaf9;--surface:#fff;--border:#e7e5e4;--border-subtle:#f5f5f4;
+  --text:#1c1917;--text-2:#57534e;--text-3:#a8a29e;
+  --accent:#2563eb;--accent-light:#dbeafe;--accent-dark:#1d4ed8;
+  --green:#16a34a;--green-light:#dcfce7;
+  --amber:#d97706;--amber-light:#fef3c7;
+  --red:#dc2626;--red-light:#fee2e2;
+  --purple:#7c3aed;--purple-light:#ede9fe;
+  --cyan:#0891b2;--cyan-light:#cffafe;
+  --radius:12px;--radius-sm:8px;--radius-pill:100px;
+  --shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.05),0 2px 4px -2px rgba(0,0,0,.05);
 }
 html{scroll-behavior:smooth}
-body{font-family:'Outfit',sans-serif;background:var(--void);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'Work Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.6}
+h1,h2,h3,h4,h5{font-family:'Outfit',sans-serif;line-height:1.2}
+code{font-family:'JetBrains Mono',monospace;font-size:.85em;background:var(--border-subtle);padding:.15em .4em;border-radius:4px}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
-/* Scanline overlay */
-body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9999}
+/* ── LAYOUT ── */
+.container{max-width:720px;margin:0 auto;padding:0 1.25rem}
 
-/* Scrollbar */
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:var(--void)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+/* ── HEADER ── */
+.header{padding:3rem 0 1.5rem;border-bottom:1px solid var(--border)}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem}
+.header h1{font-size:1.6rem;font-weight:800;letter-spacing:-.03em}
+.header p{color:var(--text-2);font-size:.88rem;font-weight:300}
+.header-badge{font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:.25rem .6rem;border-radius:var(--radius-pill);border:1px solid var(--border);color:var(--text-3)}
 
-/* ─── HEADER ─── */
-.header{text-align:center;padding:2.5rem 1.5rem 1.5rem;position:relative}
-.header::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(0,255,136,.04) 0%,rgba(59,130,246,.02) 40%,transparent 70%);pointer-events:none}
-.logo{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.25em;text-transform:uppercase;color:var(--text-3)}
-.title{font-family:'Orbitron',sans-serif;font-size:clamp(1.6rem,4.5vw,2.8rem);font-weight:800;letter-spacing:-.01em;margin:.5rem 0;background:linear-gradient(135deg,var(--text) 0%,var(--text-2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.subtitle{font-size:.9rem;color:var(--text-2);font-weight:300}
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:100;background:rgba(250,250,249,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.5rem 0}
+.nav-inner{display:flex;gap:.25rem}
+.nav-btn{font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:500;padding:.4rem .9rem;border-radius:var(--radius-pill);border:none;background:transparent;color:var(--text-3);cursor:pointer;transition:all .15s ease}
+.nav-btn:hover{color:var(--text);background:var(--border-subtle)}
+.nav-btn.active{color:var(--accent);background:var(--accent-light)}
 
-/* ─── NAV TABS ─── */
-.nav{display:flex;justify-content:center;gap:.25rem;padding:.75rem 1rem;position:sticky;top:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-.nav-btn{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:.55rem 1.2rem;border:1px solid transparent;border-radius:100px;background:transparent;color:var(--text-3);cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:.4rem}
-.nav-btn:hover{color:var(--text-2);background:var(--elevated)}
-.nav-btn.active{color:var(--green);border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.05)}
-.nav-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* ── STATS ROW ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;padding:1.25rem 0}
+.stat-card{text-align:center;padding:.6rem .25rem}
+.stat-val{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700}
+.stat-label{font-size:.65rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-top:.1rem}
 
-/* ─── STATS BAR ─── */
-.stats-bar{max-width:960px;margin:0 auto;padding:1rem 1.5rem;display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
-.stat{text-align:center;padding:.6rem .5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
-.stat-val{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700}
-.stat-label{font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-top:.15rem}
+/* Progress */
+.progress{height:3px;background:var(--border-subtle);border-radius:2px;margin-bottom:1.5rem;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;transition:width .5s ease}
 
-/* Progress track */
-.progress-wrap{max-width:960px;margin:.5rem auto;padding:0 1.5rem}
-.progress-track{height:3px;background:var(--elevated);border-radius:2px;overflow:hidden}
-.progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--blue),var(--purple),var(--amber));transition:width .6s ease;width:0%}
+/* ── PAGES ── */
+.page{display:none;padding-bottom:4rem}.page.active{display:block}
 
-/* ─── TAB PAGES ─── */
-.page{display:none;max-width:960px;margin:0 auto;padding:1rem 1.5rem 4rem}
-.page.active{display:block}
-
-/* ─── PHASE CARDS ─── */
-.phase{margin-bottom:1rem;animation:fadeUp .4s ease both}
-.phase:nth-child(2){animation-delay:.04s}.phase:nth-child(3){animation-delay:.08s}
-.phase:nth-child(4){animation-delay:.12s}.phase:nth-child(5){animation-delay:.16s}.phase:nth-child(6){animation-delay:.2s}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-.phase-head{display:flex;align-items:center;gap:.75rem;padding:.8rem 0;cursor:pointer;user-select:none}
-.phase-dot{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem}
-.phase-dot svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+/* ── PHASE ── */
+.phase{margin-bottom:.5rem}
+.phase-head{display:flex;align-items:center;gap:.6rem;padding:.75rem 0;cursor:pointer;user-select:none}
+.phase-indicator{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .phase-meta{flex:1}
-.phase-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3)}
-.phase-name{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;letter-spacing:-.01em}
-.phase-quote{font-size:.75rem;color:var(--text-3);font-style:italic;font-weight:300;margin-top:.1rem}
-.phase-chevron{color:var(--text-3);transition:transform .25s ease}
-.phase-chevron svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
-.phase.open .phase-chevron{transform:rotate(180deg)}
-.phase-body{display:none;padding-left:0}.phase.open .phase-body{display:block}
+.phase-label{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600}
+.phase-sub{font-size:.75rem;color:var(--text-3);font-weight:300}
+.phase-chevron{color:var(--text-3);transition:transform .2s ease;font-size:.8rem}
+.phase.open .phase-chevron{transform:rotate(90deg)}
+.phase-body{display:none;padding:0 0 .5rem 14px;border-left:1px solid var(--border-subtle);margin-left:3px}
+.phase.open .phase-body{display:block}
 
-/* ─── PROJECT CARDS ─── */
-.proj{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:.75rem;overflow:hidden;transition:border-color .2s}
-.proj:hover{border-color:#2e3050}
-.proj-head{padding:1rem 1.25rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;user-select:none}
-.proj-num{font-family:'Orbitron',sans-serif;font-size:.65rem;font-weight:700;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.proj-info{flex:1}
-.proj-title{font-size:.95rem;font-weight:600}
-.proj-desc{font-size:.75rem;color:var(--text-2);margin-top:.1rem}
-.proj-status{font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:.08em;padding:.2rem .5rem;border-radius:100px;border:1px solid var(--border);color:var(--text-3);white-space:nowrap}
-.proj-status.in-progress{color:var(--amber);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)}
-.proj-status.complete{color:var(--green);border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.06)}
-.proj-arrow{color:var(--text-3);transition:transform .25s ease}
-.proj-arrow svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
-.proj.open .proj-arrow{transform:rotate(180deg)}
-.proj-content{display:none;padding:0 1.25rem 1.25rem}.proj.open .proj-content{display:block}
+/* ── PROJECT CARD ── */
+.proj{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:.5rem;transition:border-color .15s,box-shadow .15s;overflow:hidden}
+.proj:hover{border-color:#d6d3d1;box-shadow:var(--shadow)}
+.proj-head{display:flex;align-items:center;gap:.65rem;padding:.85rem 1rem;cursor:pointer;user-select:none}
+.proj-num{font-family:'Outfit',sans-serif;font-size:.7rem;font-weight:700;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.proj-info{flex:1;min-width:0}
+.proj-title{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:600}
+.proj-desc{font-size:.75rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proj-badge{font-size:.6rem;font-weight:500;padding:.15rem .45rem;border-radius:var(--radius-pill);white-space:nowrap}
+.proj-badge.todo{background:var(--border-subtle);color:var(--text-3)}
+.proj-badge.active{background:var(--amber-light);color:var(--amber)}
+.proj-badge.done{background:var(--green-light);color:var(--green)}
+.proj-expand{color:var(--text-3);transition:transform .2s;font-size:.7rem}
+.proj.open .proj-expand{transform:rotate(90deg)}
+.proj-content{display:none;padding:0 1rem 1rem;border-top:1px solid var(--border-subtle)}
+.proj.open .proj-content{display:block}
 
-/* ─── CONCEPT PILLS ─── */
-.cat{margin-bottom:1rem}
-.cat-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:.4rem;padding-left:.15rem}
-.pills{display:flex;flex-wrap:wrap;gap:.4rem}
-.pill{display:inline-flex;align-items:center;gap:.3rem;padding:.38rem .75rem;background:var(--elevated);border:1px solid var(--border);border-radius:100px;font-size:.78rem;color:var(--text);cursor:pointer;transition:var(--transition);user-select:none;white-space:nowrap}
-.pill:hover{background:#1f2136;border-color:#363856;transform:translateY(-1px)}
-.pill:focus-visible{outline:2px solid var(--green);outline-offset:2px}
-.pill.key{font-weight:500}
-.pill.learned{opacity:.4;text-decoration:line-through}
-.pill .k{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+/* ── CONCEPT GROUPS ── */
+.cat{margin-top:.85rem}
+.cat-label{font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:.35rem}
+.pills{display:flex;flex-wrap:wrap;gap:.3rem}
+.pill{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-pill);font-size:.75rem;color:var(--text);cursor:pointer;transition:all .15s;user-select:none}
+.pill:hover{background:var(--surface);border-color:#d6d3d1;box-shadow:var(--shadow)}
+.pill:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pill.key{font-weight:500;border-color:currentColor;border-width:1.5px}
+.pill.learned{opacity:.35;text-decoration:line-through}
+.pill .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 
-/* ─── ROADMAP TAB ─── */
-.road-phase{margin-bottom:2rem}
-.road-phase-title{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
-.road-phase-title .dot{width:8px;height:8px;border-radius:50%}
-.road-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.6rem;display:flex;align-items:center;gap:1rem;transition:var(--transition)}
-.road-card:hover{border-color:#2e3050}
-.road-num{font-family:'Orbitron',sans-serif;font-size:.6rem;font-weight:700;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.road-info{flex:1}
-.road-title{font-size:.88rem;font-weight:600}
-.road-desc{font-size:.72rem;color:var(--text-2);margin-top:.1rem}
-.road-papers{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text-3);margin-top:.3rem}
-.road-actions{display:flex;gap:.4rem;flex-shrink:0}
-.road-btn{font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:.06em;padding:.3rem .6rem;border-radius:6px;border:1px solid var(--border);background:var(--elevated);color:var(--text-2);cursor:pointer;transition:var(--transition)}
-.road-btn:hover{border-color:#3a3d5a;color:var(--text)}
-.road-btn.active-status{border-color:rgba(0,255,136,.3);color:var(--green);background:rgba(0,255,136,.06)}
+/* ── ROADMAP TAB ── */
+.road-group{margin-bottom:1.5rem}
+.road-group-title{font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.road-group-title .dot{width:6px;height:6px;border-radius:50%}
+.road-item{display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.35rem;transition:box-shadow .15s}
+.road-item:hover{box-shadow:var(--shadow)}
+.road-num{font-family:'Outfit',sans-serif;font-size:.6rem;font-weight:700;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.road-info{flex:1;min-width:0}
+.road-title{font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:500}
+.road-sub{font-size:.68rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.road-btns{display:flex;gap:.2rem;flex-shrink:0}
+.road-btn{font-size:.6rem;font-weight:500;padding:.2rem .45rem;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--bg);color:var(--text-3);cursor:pointer;transition:all .15s}
+.road-btn:hover{border-color:#d6d3d1;color:var(--text)}
+.road-btn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
 
-/* ─── STATS TAB ─── */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin-bottom:1.5rem}
-.stats-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
-.stats-card-val{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:800}
-.stats-card-label{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-top:.25rem}
-.stats-card-bar{margin-top:.6rem;height:4px;background:var(--elevated);border-radius:2px;overflow:hidden}
-.stats-card-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+/* ── STATS TAB ── */
+.stats-big{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem;margin-bottom:1.5rem}
+.stats-big-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem}
+.stats-big-val{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800}
+.stats-big-label{font-size:.72rem;color:var(--text-3);margin-top:.15rem}
+.stats-big-bar{height:3px;background:var(--border-subtle);border-radius:2px;margin-top:.6rem;overflow:hidden}
+.stats-big-bar div{height:100%;border-radius:2px;transition:width .5s}
 
-.phase-breakdown{margin-top:1.5rem}
-.phase-breakdown-title{font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:700;margin-bottom:.75rem}
-.pb-row{display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid var(--border)}
-.pb-row:last-child{border-bottom:none}
-.pb-label{font-size:.78rem;flex:1}
-.pb-bar{width:120px;height:4px;background:var(--elevated);border-radius:2px;overflow:hidden;flex-shrink:0}
-.pb-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
-.pb-pct{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-3);width:36px;text-align:right;flex-shrink:0}
+.breakdown{margin-top:1rem}
+.breakdown-title{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:600;margin-bottom:.6rem}
+.breakdown-row{display:flex;align-items:center;gap:.6rem;padding:.45rem 0;border-bottom:1px solid var(--border-subtle)}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-label{font-size:.78rem;flex:1}
+.breakdown-bar{width:100px;height:3px;background:var(--border-subtle);border-radius:2px;overflow:hidden;flex-shrink:0}
+.breakdown-bar div{height:100%;border-radius:2px;transition:width .5s}
+.breakdown-pct{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-3);width:32px;text-align:right;flex-shrink:0}
 
-/* ─── CONNECTIONS ─── */
-.conn-section{margin-top:2rem}
-.conn-title{text-align:center;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;justify-content:center}
-.conn-title::before,.conn-title::after{content:'';width:50px;height:1px;background:var(--border)}
-.conn{background:var(--card);border:1px solid var(--border);border-left:3px solid;border-radius:var(--radius);padding:.85rem 1.1rem;margin-bottom:.6rem}
-.conn h4{font-size:.82rem;font-weight:600;margin-bottom:.25rem}
-.conn p{font-size:.75rem;color:var(--text-2);line-height:1.55}
+/* ── CONNECTIONS ── */
+.conn-section{margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.conn-section-title{font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:.75rem;text-align:center}
+.conn{padding:.7rem .85rem;border-left:2px solid;border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:.5rem;background:var(--surface)}
+.conn h4{font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:600}
+.conn p{font-size:.72rem;color:var(--text-2);margin-top:.15rem;line-height:1.5}
 
-/* ─── BOTTOM SHEET ─── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px)}
+/* ── SHEET ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px)}
 .overlay.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;bottom:0;left:0;right:0;max-height:80vh;background:var(--surface);border-top:1px solid var(--border);border-radius:18px 18px 0 0;z-index:1001;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);overflow-y:auto;overscroll-behavior:contain}
+.sheet{position:fixed;bottom:0;left:0;right:0;max-height:80vh;background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;z-index:1001;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);overflow-y:auto;overscroll-behavior:contain;box-shadow:0 -4px 24px rgba(0,0,0,.08)}
 .sheet.on{transform:translateY(0)}
 .sheet-handle{width:32px;height:3px;background:var(--border);border-radius:2px;margin:8px auto 0}
-.sheet-inner{padding:1.25rem 1.5rem 1.5rem;max-width:680px;margin:0 auto}
-.sheet-phase{font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:.35rem}
-.sheet-title{font-family:'Orbitron',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:.75rem}
+.sheet-inner{padding:1.25rem 1.5rem 1.5rem;max-width:600px;margin:0 auto}
+.sheet-label{font-size:.65rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:.25rem}
+.sheet-title{font-family:'Outfit',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:.75rem}
 .sheet-body{font-size:.88rem;line-height:1.7;color:var(--text-2)}
-.sheet-body strong{color:var(--text);font-weight:600}
-.sheet-body code{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:var(--elevated);padding:.12em .35em;border-radius:4px;color:var(--green)}
-.sheet-actions{display:flex;gap:.5rem;margin-top:1.25rem;padding-bottom:.5rem}
-.sheet-btn{font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:.5rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--elevated);color:var(--text);cursor:pointer;transition:var(--transition)}
-.sheet-btn:hover{border-color:#3a3d5a}
-.sheet-btn.primary{background:var(--green);border-color:var(--green);color:#000;font-weight:600}
-.sheet-btn.primary:hover{filter:brightness(1.1)}
+.sheet-body strong{color:var(--text);font-weight:500}
+.sheet-body code{font-family:'JetBrains Mono',monospace;font-size:.78rem;background:var(--border-subtle);padding:.12em .35em;border-radius:4px}
+.sheet-btns{display:flex;gap:.4rem;margin-top:1.25rem}
+.sheet-btn{font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:500;padding:.45rem .9rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:all .15s}
+.sheet-btn:hover{border-color:#d6d3d1;box-shadow:var(--shadow)}
+.sheet-btn.primary{background:var(--text);border-color:var(--text);color:var(--bg)}
+.sheet-btn.primary:hover{opacity:.85}
 
-/* ─── RESPONSIVE ─── */
+/* ── RESPONSIVE ── */
 @media(max-width:640px){
-  .stats-bar{grid-template-columns:repeat(2,1fr)}
-  .road-card{flex-direction:column;align-items:flex-start}
-  .road-actions{width:100%}
-  .nav-btn{font-size:.62rem;padding:.45rem .8rem}
-  .pill{font-size:.72rem;padding:.32rem .6rem}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stats-big{grid-template-columns:1fr}
+  .road-item{flex-wrap:wrap}.road-btns{width:100%;justify-content:flex-end}
+  .container{padding:0 1rem}
 }
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#171717;--surface:#1c1c1c;--border:#2e2e2e;--border-subtle:#252525;--text:#e5e5e5;--text-2:#a3a3a3;--text-3:#636363;--accent-light:rgba(37,99,235,.15);--green-light:rgba(22,163,74,.15);--amber-light:rgba(217,119,6,.15);--red-light:rgba(220,38,38,.15);--purple-light:rgba(124,58,237,.15);--cyan-light:rgba(8,145,178,.15);--shadow:0 1px 3px rgba(0,0,0,.2)}
+  .nav{background:rgba(23,23,23,.85)}
 }
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="logo">learning journey tracker</div>
-  <h1 class="title">AI: Sand to Agents</h1>
-  <p class="subtitle">18 projects &middot; 6 phases &middot; Semiconductors to agentic architecture</p>
-</header>
+<div class="container">
+  <header class="header">
+    <div class="header-top">
+      <h1>AI: Sand to Agents</h1>
+      <span class="header-badge">18 projects</span>
+    </div>
+    <p>An interactive learning journey from semiconductors to agentic architecture.</p>
+  </header>
+</div>
 
-<nav class="nav" role="tablist">
-  <button class="nav-btn active" role="tab" aria-selected="true" onclick="showPage('map')" id="tab-map">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-    Map
-  </button>
-  <button class="nav-btn" role="tab" aria-selected="false" onclick="showPage('roadmap')" id="tab-roadmap">
-    <svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-    Roadmap
-  </button>
-  <button class="nav-btn" role="tab" aria-selected="false" onclick="showPage('stats')" id="tab-stats">
-    <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-    Stats
-  </button>
+<nav class="nav">
+  <div class="container nav-inner">
+    <button class="nav-btn active" onclick="showPage('map')" id="t-map">Map</button>
+    <button class="nav-btn" onclick="showPage('roadmap')" id="t-roadmap">Roadmap</button>
+    <button class="nav-btn" onclick="showPage('stats')" id="t-stats">Stats</button>
+  </div>
 </nav>
 
-<div class="stats-bar">
-  <div class="stat"><div class="stat-val" style="color:var(--green)" id="s-concepts">0</div><div class="stat-label">Concepts</div></div>
-  <div class="stat"><div class="stat-val" style="color:var(--blue)" id="s-projects">0/18</div><div class="stat-label">Projects</div></div>
-  <div class="stat"><div class="stat-val" style="color:var(--purple)" id="s-phase">1</div><div class="stat-label">Phase</div></div>
-  <div class="stat"><div class="stat-val" style="color:var(--amber)" id="s-pct">0%</div><div class="stat-label">Complete</div></div>
+<div class="container">
+  <div class="stats">
+    <div class="stat-card"><div class="stat-val" style="color:var(--accent)" id="sv-c">0</div><div class="stat-label">Learned</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)" id="sv-p">0/18</div><div class="stat-label">Projects</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--purple)" id="sv-ph">1</div><div class="stat-label">Phase</div></div>
+    <div class="stat-card"><div class="stat-val" id="sv-pct">0%</div><div class="stat-label">Complete</div></div>
+  </div>
+  <div class="progress"><div class="progress-bar" id="pBar"></div></div>
+
+  <div class="page active" id="p-map"></div>
+  <div class="page" id="p-roadmap"></div>
+  <div class="page" id="p-stats"></div>
 </div>
-<div class="progress-wrap"><div class="progress-track"><div class="progress-fill" id="pFill"></div></div></div>
-
-<!-- MAP PAGE -->
-<div class="page active" id="page-map"></div>
-
-<!-- ROADMAP PAGE -->
-<div class="page" id="page-roadmap"></div>
-
-<!-- STATS PAGE -->
-<div class="page" id="page-stats"></div>
 
 <div class="overlay" id="ov"></div>
-<div class="sheet" id="sh">
-  <div class="sheet-handle"></div>
-  <div class="sheet-inner" id="shInner"></div>
-</div>
+<div class="sheet" id="sh"><div class="sheet-handle"></div><div class="sheet-inner" id="shI"></div></div>
 
 <script>
-// ── DATA ──
-const PHASES=[
-{id:'foundations',label:'Phase 1 · Weeks 1–6',name:'Foundations',quote:'Before you can build, you need to understand the bricks.',color:'var(--green)',hex:'#00ff88',
-projects:[
-{n:1,slug:'neural-net-from-scratch',title:'Neural Net from Scratch',desc:'Build a neural network library in pure NumPy',papers:['Rumelhart 1986 (Backprop)','Kingma & Ba 2015 (Adam)'],cats:[
-{label:'Linear Algebra',pills:[
-{name:'Matrix Multiplication',key:1,c:'<strong>Matrix multiplication</strong> is the core operation of neural networks. Every forward pass computes <code>y = Wx + b</code> — a matrix-vector product.\n\nThe weight matrix W transforms input x from one representation space to another. Understanding shapes is critical: if W is (output_dim × input_dim) and x is (input_dim × 1), then y is (output_dim × 1).\n\nIn a batch: X is (batch_size × input_dim), so <code>Y = XW^T + b</code>. Getting these shapes right is 80% of debugging neural nets.'},
-{name:'Vectors & Norms',c:'<strong>Vectors</strong> are the fundamental data unit in ML. An image is a vector (flattened pixels). A word embedding is a vector.\n\n<strong>Norms</strong> measure vector magnitude:\n• <strong>L1</strong> (Manhattan): sum of absolute values — used in Lasso regularization, induces sparsity\n• <strong>L2</strong> (Euclidean): sqrt of sum of squares — used in Ridge regularization, gradient clipping\n• <strong>L∞</strong>: max absolute value — used in adversarial robustness\n\nL2 regularization adds λ||w||₂² to the loss, shrinking all weights. L1 drives weights to exactly zero.'},
-{name:'Dot Product & Cosine Similarity',c:'The <strong>dot product</strong> measures alignment: <code>a·b = ||a|| ||b|| cos(θ)</code>\n\n<strong>Cosine similarity</strong> = dot product of unit vectors = cos(θ). Ranges from -1 (opposite) to +1 (identical direction).\n\nThis is THE metric for semantic search. "Password reset" and "Can\'t log in" have high cosine similarity in embedding space despite sharing zero words. This single operation powers all of RAG.'},
-{name:'Transpose & Broadcasting',c:'<strong>Transpose</strong> flips rows/columns: shape (m,n) → (n,m). Critical for aligning dimensions in matmul.\n\n<strong>Broadcasting</strong>: NumPy\'s rule for operating on arrays of different shapes. Adding bias b (shape 1×n) to batch Y (shape m×n) automatically expands b across all m rows.\n\nMastering broadcasting eliminates 90% of explicit loops in NumPy, which is essential since Python loops on arrays are ~100× slower than vectorized operations.'}
-]},
-{label:'Calculus & Optimization',pills:[
-{name:'Chain Rule',key:1,c:'The <strong>chain rule</strong> IS backpropagation — not an analogy, a literal identity.\n\nIf <code>L = f(g(h(x)))</code>, then:\n<code>dL/dx = dL/df · df/dg · dg/dh · dh/dx</code>\n\nIn a neural network: L is the loss, each function is a layer. Backprop computes how much each weight contributed to the final loss by multiplying local gradients backward.\n\nThis single insight — gradients compose multiplicatively — is the mathematical foundation of all deep learning.'},
-{name:'Gradients',c:'A <strong>partial derivative</strong> ∂L/∂w tells you: "if I nudge weight w by ε, how much does loss change?"\n\nThe <strong>gradient</strong> ∇L is the vector of ALL partial derivatives. It points in the direction of steepest increase. To minimize loss, walk opposite:\n\n<code>w ← w - η·∇L</code>\n\nThe gradient is perpendicular to loss contours. This is why gradient descent is the natural optimization algorithm for smooth functions.'},
-{name:'SGD',key:1,c:'<strong>SGD</strong> estimates the gradient from a small batch instead of the full dataset:\n\n<code>w ← w - η · ∇L_batch(w)</code>\n\nThe noise from small batches is actually beneficial — it helps escape shallow local minima and saddle points. This is why SGD often finds better solutions than exact gradient descent.\n\nKey hyperparameters:\n• Learning rate η — most important single hyperparameter\n• Batch size — affects gradient noise and GPU utilization'},
-{name:'Momentum',c:'<strong>Momentum</strong> accumulates past gradients:\n\n<code>v ← βv + ∇L</code>\n<code>w ← w - ηv</code>\n\nLike a ball rolling downhill — accumulates velocity through flat regions, smooths oscillations in ravines. β (typically 0.9) controls friction.\n\nWithout momentum, SGD zigzags inefficiently. With it, convergence is dramatically smoother.'},
-{name:'Adam',key:1,c:'<strong>Adam</strong> combines momentum (1st moment) + RMSProp (2nd moment):\n\n• <code>m = β₁m + (1-β₁)∇L</code> — gradient direction\n• <code>v = β₂v + (1-β₂)(∇L)²</code> — gradient scale\n• <code>w ← w - η·m̂/(√v̂ + ε)</code>\n\nPer-parameter adaptive rates: large-gradient params get smaller steps, small-gradient params get larger steps.\n\nDefaults: β₁=0.9, β₂=0.999, η=1e-3. The most widely used optimizer. Implement it from scratch to truly understand it.'}
-]},
-{label:'Neural Network Core',pills:[
-{name:'Perceptron → Deep Net',key:1,c:'A <strong>perceptron</strong> is one neuron: <code>y = σ(w·x + b)</code>. Only learns linear boundaries — can\'t solve XOR.\n\nStack layers → <strong>Multi-Layer Perceptron (MLP)</strong>. With one hidden layer and enough neurons, it can approximate any continuous function (Universal Approximation Theorem).\n\nDepth > width: deep networks compose features hierarchically (edges → shapes → objects), expressing complex functions exponentially more efficiently.'},
-{name:'Activation Functions',c:'Activations add <strong>nonlinearity</strong>. Without them, stacking linear layers collapses to one linear layer.\n\n• <strong>Sigmoid</strong>: σ(x) = 1/(1+e⁻ˣ). Squashes to [0,1]. Vanishing gradient for large |x|.\n• <strong>ReLU</strong>: max(0,x). Fast, no saturation for x>0. "Dying ReLU" — neurons stuck at 0.\n• <strong>GELU</strong>: x·Φ(x). Smooth ReLU. Used in Transformers.\n• <strong>Softmax</strong>: exp(xᵢ)/Σexp(xⱼ). Multi-class probabilities. Output layer for classification.\n\nReLU is the default for hidden layers.'},
-{name:'Backpropagation',key:1,c:'<strong>Backprop</strong> = chain rule applied efficiently to a computational graph.\n\n1. <strong>Forward pass</strong>: compute output, save all intermediate values\n2. <strong>Backward pass</strong>: compute gradients layer by layer in reverse\n\nEach layer computes two things:\n• <code>∂L/∂W</code> — gradient w.r.t. weights (for updating)\n• <code>∂L/∂x</code> — gradient w.r.t. input (to pass backward)\n\nBackprop computes ALL gradients in O(forward pass) time. Without it, n gradients would cost O(n × forward). This efficiency is why neural nets are trainable.'},
-{name:'Loss Functions',c:'The loss defines <strong>what "wrong" means</strong>.\n\n<strong>MSE</strong>: (ŷ - y)². Good for regression. Penalizes large errors quadratically.\n\n<strong>Cross-Entropy</strong>: -Σ yᵢ log(ŷᵢ). Correct loss for classification. Derived from maximum likelihood — minimizing CE = maximizing the probability assigned to the correct class.\n\nWhy not MSE for classification? CE has better gradients through softmax. MSE vanishes when the model is confidently wrong — exactly when you need learning most.'},
-{name:'Weight Initialization',c:'<strong>Zero init</strong>: catastrophic — all neurons identical (no symmetry breaking).\n\n<strong>Xavier/Glorot</strong>: Var(W) = 2/(fan_in + fan_out). For tanh/sigmoid — stable activation variance.\n\n<strong>He init</strong>: Var(W) = 2/fan_in. For ReLU — accounts for half the activations being zero.\n\nTry training a 20-layer MLP with wrong init to see activations collapse to zero or explode to NaN.'},
-{name:'Regularization',c:'Prevents <strong>overfitting</strong> — memorizing training data vs learning patterns.\n\n<strong>L2 (Ridge)</strong>: adds λ||w||² to loss. Shrinks weights. Bayesian: Gaussian prior.\n<strong>L1 (Lasso)</strong>: adds λ||w|| to loss. Zeros out unimportant weights → sparsity. Bayesian: Laplace prior.\n<strong>Dropout</strong>: randomly zero p% of neurons during training. Forces redundant representations. Equivalent to training 2ⁿ subnetworks simultaneously.'}
-]},
-{label:'Probability',pills:[
-{name:'Distributions',c:'Key distributions for ML:\n\n<strong>Bernoulli</strong>: coin flip. P(x=1) = p. Models binary outcomes, dropout masks.\n<strong>Gaussian</strong>: N(μ,σ²). The default — weight init, noise, VAE latents.\n<strong>Categorical</strong>: generalization to K classes. Output of softmax.\n\nWhy Gaussian everywhere? Central Limit Theorem — sums of many random variables tend toward Gaussian. Neural net outputs are sums of many contributions.'},
-{name:'MLE & Cross-Entropy',key:1,c:'<strong>MLE</strong>: find θ that maximizes P(data|θ).\n\nFor classification: maximize Π P(yᵢ|xᵢ,θ). Taking log: maximize Σ log P(yᵢ|xᵢ,θ).\n\nMaximizing log-likelihood = minimizing negative log-likelihood = minimizing <strong>cross-entropy loss</strong>.\n\nThis is the deep reason CE is the "right" classification loss — it\'s the principled MLE estimator. L2 regularization = Gaussian prior. L1 = Laplace prior. Regularized training = MAP estimation.'}
+const P=[
+{id:'f',l:'Phase 1',n:'Foundations',s:'Weeks 1–6',clr:'var(--accent)',hex:'#2563eb',pj:[
+{n:1,sl:'neural-net-from-scratch',t:'Neural Net from Scratch',d:'Build a neural network library in pure NumPy',pp:['Rumelhart 1986','Kingma & Ba 2015'],cats:[
+{l:'Linear Algebra',pills:[
+{n:'Matrix Multiplication',k:1,c:'<strong>Matrix multiplication</strong> is the core operation of neural networks. Every forward pass computes <code>y = Wx + b</code>.\n\nThe weight matrix W transforms input x from one space to another. In a batch: <code>Y = XW^T + b</code>. Getting shapes right is 80% of debugging neural nets.'},
+{n:'Vectors & Norms',c:'<strong>Norms</strong> measure vector magnitude:\n\n<strong>L1</strong>: sum of absolute values — Lasso regularization, induces sparsity.\n<strong>L2</strong>: sqrt of sum of squares — Ridge regularization, gradient clipping.\n<strong>L∞</strong>: max absolute value — adversarial robustness.\n\nL2 regularization adds λ||w||₂² to loss, shrinking weights. L1 drives weights to exactly zero.'},
+{n:'Dot Product & Cosine Similarity',c:'<strong>Dot product</strong> measures alignment: <code>a·b = ||a|| ||b|| cos(θ)</code>\n\n<strong>Cosine similarity</strong> = cos(θ) between two vectors. Ranges from -1 to +1.\n\nThis is THE metric for semantic search. "Password reset" and "Can\'t log in" have high cosine similarity in embedding space despite sharing zero words.'},
+{n:'Broadcasting',c:'NumPy\'s rule for operating on arrays of different shapes. Adding bias b (1×n) to batch Y (m×n) automatically expands b across all rows.\n\nMastering broadcasting eliminates 90% of explicit loops — essential since Python loops on arrays are ~100× slower than vectorized operations.'}
+]},{l:'Calculus & Optimization',pills:[
+{n:'Chain Rule',k:1,c:'The <strong>chain rule</strong> IS backpropagation — literally.\n\nIf <code>L = f(g(h(x)))</code>, then <code>dL/dx = dL/df · df/dg · dg/dh · dh/dx</code>\n\nEach function is a layer. Backprop computes how much each weight contributed to the loss by multiplying local gradients backward through the network.'},
+{n:'Gradients',c:'The <strong>gradient</strong> ∇L is the vector of all partial derivatives — it points in the direction of steepest increase.\n\nTo minimize loss, walk opposite: <code>w ← w - η·∇L</code>\n\nThe gradient is perpendicular to loss contours. This geometric property makes gradient descent the natural optimization algorithm.'},
+{n:'SGD',k:1,c:'<strong>Stochastic Gradient Descent</strong> estimates the gradient from a small batch:\n\n<code>w ← w - η · ∇L_batch(w)</code>\n\nThe noise from small batches helps escape shallow local minima and saddle points. Key hyperparameters: learning rate η (most important), batch size (affects noise and GPU utilization).'},
+{n:'Adam Optimizer',k:1,c:'<strong>Adam</strong> combines momentum (direction) with RMSProp (scale):\n\n<code>m = β₁m + (1-β₁)∇L</code> — gradient direction\n<code>v = β₂v + (1-β₂)(∇L)²</code> — gradient magnitude\n<code>w ← w - η·m̂/(√v̂ + ε)</code>\n\nPer-parameter adaptive rates. Defaults: β₁=0.9, β₂=0.999, η=1e-3. The most widely used optimizer.'}
+]},{l:'Neural Networks',pills:[
+{n:'Perceptron → Deep Net',k:1,c:'A <strong>perceptron</strong>: <code>y = σ(w·x + b)</code>. Only learns linear boundaries.\n\nStack layers → <strong>MLP</strong>. With one hidden layer and enough neurons, it can approximate any continuous function (Universal Approximation Theorem).\n\nDepth > width: deep networks compose features hierarchically, expressing complex functions exponentially more efficiently.'},
+{n:'Activation Functions',c:'Add <strong>nonlinearity</strong>. Without them, stacking linear layers = one linear layer.\n\n<strong>ReLU</strong>: max(0,x). Default for hidden layers. Fast, no saturation. "Dying ReLU" problem.\n<strong>GELU</strong>: smooth ReLU. Used in Transformers.\n<strong>Softmax</strong>: multi-class probabilities. Output layer.'},
+{n:'Backpropagation',k:1,c:'<strong>Backprop</strong> = chain rule on a computational graph.\n\n1. <strong>Forward</strong>: compute output, save intermediates\n2. <strong>Backward</strong>: compute gradients in reverse\n\nComputes ALL gradients in O(forward pass) time. Without it, n gradients cost O(n × forward). This efficiency is why neural nets are trainable.'},
+{n:'Loss Functions',c:'<strong>MSE</strong>: (ŷ-y)². Regression. Penalizes large errors quadratically.\n\n<strong>Cross-Entropy</strong>: -Σ yᵢ log(ŷᵢ). Classification. Derived from maximum likelihood estimation.\n\nWhy CE over MSE for classification? CE has better gradients through softmax — MSE vanishes when the model is confidently wrong.'},
+{n:'Weight Initialization',c:'<strong>Xavier</strong>: Var(W) = 2/(fan_in + fan_out). For tanh/sigmoid.\n<strong>He</strong>: Var(W) = 2/fan_in. For ReLU.\n\nWrong init → activations collapse to zero or explode to NaN. Try training a 20-layer MLP with wrong init to see this.'},
+{n:'Regularization',c:'<strong>L2</strong>: adds λ||w||² to loss. Shrinks weights. Gaussian prior.\n<strong>L1</strong>: adds λ||w|| to loss. Zeros out unimportant weights. Laplace prior.\n<strong>Dropout</strong>: randomly zero p% of neurons during training. Forces redundant representations.'},
+{n:'MLE & Cross-Entropy',k:1,c:'<strong>MLE</strong>: maximize P(data|θ). Maximizing log-likelihood = minimizing negative log-likelihood = minimizing <strong>cross-entropy</strong>.\n\nThis is the deep reason CE is the "right" classification loss. L2 regularization = Gaussian prior. L1 = Laplace prior. Regularized training = MAP estimation.'}
 ]}
 ]},
-{n:2,slug:'cnn-image-classifier',title:'CNN Image Classifier',desc:'Convolutions from scratch, then PyTorch',papers:['He et al. 2016 (ResNet)'],cats:[
-{label:'Convolution',pills:[
-{name:'Convolution & Kernels',key:1,c:'A <strong>convolution</strong> slides a small filter (kernel) over input, computing dot product at each position.\n\nA 3×3 kernel has just 9 parameters applied everywhere — <strong>weight sharing</strong>. Two key properties:\n• <strong>Translation equivariance</strong>: detect the same feature regardless of position\n• <strong>Parameter efficiency</strong>: 9 params vs 2.4M for a fully-connected layer on 224×224\n\nKey parameters: kernel size, stride, padding, dilation.'},
-{name:'Receptive Field',c:'The <strong>receptive field</strong> is the input region influencing one output neuron.\n\nLayer 1 (3×3): sees 3×3. Layer 2: sees 5×5. Layer 3: sees 7×7.\n\nDeep CNNs build hierarchy: early layers → edges (small RF), later → objects (large RF). This compositional hierarchy is how CNNs decompose complex patterns.'},
-{name:'ResNet & Skip Connections',key:1,c:'<strong>ResNet</strong> (2015) solved degradation: deeper nets performed WORSE.\n\nFix: <strong>skip connections</strong>. Learn F(x) + x instead of F(x). If optimal transform ≈ identity, learning a small residual is much easier.\n\nGradients flow directly through skips — a "gradient highway." Enabled 152+ layer networks.\n\nResidual connections appear everywhere now: Transformers, LLMs, diffusion models. One of the most impactful ideas in deep learning.'}
-]},
-{label:'PyTorch',pills:[
-{name:'Autograd & Tensors',key:1,c:'PyTorch <strong>autograd</strong> tracks operations on tensors with <code>requires_grad=True</code>.\n\n<code>loss.backward()</code> walks the graph backward computing all gradients. Access via <code>param.grad</code>.\n\n• <strong>Dynamic graph</strong>: rebuilt each forward pass — Python control flow works naturally\n• <code>torch.no_grad()</code>: disable tracking for inference\n• <code>.detach()</code>: remove tensor from graph'},
-{name:'Training Loop',c:'The 5-line heartbeat of deep learning:\n\n<code>optimizer.zero_grad()</code> — clear old gradients\n<code>output = model(input)</code> — forward\n<code>loss = criterion(output, target)</code> — compute loss\n<code>loss.backward()</code> — compute gradients\n<code>optimizer.step()</code> — update weights\n\nEverything else is infrastructure around this loop.'},
-{name:'Transfer Learning',c:'Take a model pre-trained on ImageNet, replace final head, fine-tune on your data.\n\nWhy: early CNN layers learn universal features (edges, textures) that transfer. Only final layers need task-specific training.\n\nOften 95%+ accuracy with 100 examples per class. The most practical CV technique.'}
-]},
-{label:'Hardware',pills:[
-{name:'Why GPUs',c:'<strong>CPUs</strong>: optimize for single-thread latency. <strong>GPUs</strong>: optimize for throughput — thousands of simple cores in parallel.\n\nMatrix multiply is embarrassingly parallel: each output element is independent. H100: 989 TFLOPS. CPU: ~1 TFLOPS. 1000× gap.\n\nThis is why deep learning needs GPUs.'},
-{name:'CUDA Basics',c:'<code>tensor.to("cuda")</code> moves data to GPU. <code>model.to("cuda")</code> moves parameters.\n\nKey: memory transfers (CPU↔GPU) are slow — minimize them. Tensor Cores: specialized 16× faster matrix multiply units.\n\nCUDA locked AI into NVIDIA. Understanding this monopoly explains $30K GPU prices and years-long waitlists.'}
+{n:2,sl:'cnn-image-classifier',t:'CNN Image Classifier',d:'Convolutions from scratch, then PyTorch',pp:['He et al. 2016 (ResNet)'],cats:[
+{l:'Convolution',pills:[
+{n:'Kernels & Weight Sharing',k:1,c:'A 3×3 kernel has 9 parameters applied everywhere — <strong>weight sharing</strong>.\n\n<strong>Translation equivariance</strong>: detects the same feature regardless of position.\n<strong>Parameter efficiency</strong>: 9 params vs 2.4M for fully-connected on 224×224.'},
+{n:'ResNet & Skip Connections',k:1,c:'<strong>ResNet</strong> learned F(x) + x instead of F(x). If the optimal transform ≈ identity, learning a small residual is easier.\n\nGradients flow directly through skips. Enabled 152+ layer networks. Used everywhere now: Transformers, LLMs, diffusion models.'}
+]},{l:'PyTorch',pills:[
+{n:'Autograd',k:1,c:'PyTorch tracks operations on tensors with <code>requires_grad=True</code>. <code>loss.backward()</code> computes all gradients via the chain rule.\n\nDynamic graph: rebuilt each forward pass. Python control flow works naturally.'},
+{n:'Training Loop',c:'The 5-line heartbeat:\n<code>zero_grad → forward → loss → backward → step</code>\n\nEverything else is infrastructure around this.'},
+{n:'Transfer Learning',c:'Pre-trained model → replace final head → fine-tune on your data.\n\nEarly layers learn universal features that transfer. Often 95%+ accuracy with 100 examples per class.'}
+]},{l:'Hardware',pills:[
+{n:'Why GPUs',c:'CPUs: optimize for single-thread latency. GPUs: throughput — thousands of simple cores.\n\nH100: 989 TFLOPS. CPU: ~1 TFLOPS. 1000× gap. Matrix multiply is embarrassingly parallel.'},
+{n:'CUDA',c:'NVIDIA\'s programming model. <code>tensor.to("cuda")</code> moves data to GPU.\n\nTensor Cores: 16× faster matrix multiply. CUDA locked AI into NVIDIA — explains $30K prices and years-long waitlists.'}
 ]}
 ]}
 ]},
-{id:'transformers',label:'Phase 2 · Weeks 7–14',name:'The Transformer Revolution',quote:'One paper changed everything.',color:'var(--blue)',hex:'#3b82f6',
-projects:[
-{n:3,slug:'transformer-from-scratch',title:'Transformer from Scratch',desc:'Attention, positional encoding, full architecture',papers:['Vaswani et al. 2017 (Attention Is All You Need)','Devlin et al. 2018 (BERT)'],cats:[
-{label:'Attention Mechanism',pills:[
-{name:'Scaled Dot-Product Attention',key:1,c:'The equation that changed AI:\n\n<code>Attention(Q,K,V) = softmax(QKᵀ/√dₖ)V</code>\n\n<strong>Q</strong> (query): what am I looking for?\n<strong>K</strong> (key): what do I contain?\n<strong>V</strong> (value): what info do I provide?\n\nQKᵀ = pairwise compatibility scores. Softmax → probabilities. Multiply by V → weighted blend.\n\n√dₖ scaling prevents softmax saturation in high dimensions. This is a soft database lookup.'},
-{name:'Multi-Head Attention',c:'Run h parallel heads in lower-dim subspaces:\n\n<code>MultiHead = Concat(head₁,...,headₕ)Wᴼ</code>\n\nWith d=512 and h=8, each head operates in 64 dims. Different heads learn different patterns: syntax, coreference, position. Multiple simultaneous "perspectives."'},
-{name:'Self vs Cross Attention',c:'<strong>Self-attention</strong>: Q,K,V from same sequence — sentence reads itself.\n<strong>Cross-attention</strong>: Q from decoder, K,V from encoder — decoder reads encoder output.\n<strong>Causal mask</strong>: token i sees only tokens ≤ i. Set future to -∞ before softmax.'},
-{name:'Why Attention Beats RNNs',c:'RNNs: sequential, O(n) path length between distant tokens. Gradients vanish.\n\nAttention: O(1) path length — any two tokens connect directly. Plus fully parallelizable (RNNs are sequential).\n\nMore GPUs = more throughput = directly better models. This is why scaling laws work.'}
-]},
-{label:'Architecture',pills:[
-{name:'Residual Stream',key:1,c:'Every sub-layer: <code>output = LayerNorm(x + Sublayer(x))</code>\n\nThe <strong>residual stream</strong>: entire transformer is a shared highway. Each layer reads from and writes to it. Gradients flow directly through — enables 100+ layer depth.'},
-{name:'FFN Layers',c:'Each transformer layer = attention + FFN:\n<code>FFN(x) = GELU(xW₁)W₂</code>\n\nHidden dim = 4× model dim. <strong>FFN is where knowledge is stored</strong> — they act as key-value memories. "Paris is the capital of France" lives in FFN weights.\n\nModern: SwiGLU activation (LLaMA, Mistral).'},
-{name:'Encoder vs Decoder',c:'<strong>Encoder-only (BERT)</strong>: bidirectional. Great for understanding. Can\'t generate.\n<strong>Decoder-only (GPT)</strong>: causal. Natural for generation. Universal via prompting.\n<strong>Encoder-decoder (T5)</strong>: input → encoder, output → decoder with cross-attention.\n\nDecoder-only won: simpler, prompting makes it universal. All frontier LLMs are decoder-only.'}
-]},
-{label:'Position & Scale',pills:[
-{name:'RoPE',key:1,c:'<strong>RoPE</strong>: encode position by rotating Q,K in complex space. Dot product depends on <strong>relative</strong> position (m-n).\n\nDominant in LLaMA, Mistral, Qwen. Context extension via frequency modification (YaRN).\n\nWhen someone says "extended context to 128K" — they usually modified RoPE frequencies.'},
-{name:'Scaling Laws',key:1,c:'Loss follows power laws: L ∝ N^(-α), L ∝ D^(-β), L ∝ C^(-γ).\n\n<strong>Chinchilla</strong>: for fixed compute, scale model and data equally. ~20 tokens per parameter.\n\nGPT-3 (175B, 300B tokens) was undertrained. LLaMA (7B, 1T tokens) proved smaller + more data wins for inference cost.'}
+{id:'t',l:'Phase 2',n:'The Transformer Revolution',s:'Weeks 7–14',clr:'var(--purple)',hex:'#7c3aed',pj:[
+{n:3,sl:'transformer-from-scratch',t:'Transformer from Scratch',d:'Attention, positional encoding, full architecture',pp:['Vaswani et al. 2017'],cats:[
+{l:'Attention',pills:[
+{n:'Scaled Dot-Product Attention',k:1,c:'<code>Attention(Q,K,V) = softmax(QKᵀ/√dₖ)V</code>\n\nQ: what am I looking for? K: what do I contain? V: what info do I provide?\n\n√dₖ scaling prevents softmax saturation. This is a soft database lookup — find relevant keys, return their values.'},
+{n:'Multi-Head Attention',c:'Run h parallel heads in lower-dim subspaces. Different heads learn different patterns: syntax, coreference, position. Multiple simultaneous perspectives.'},
+{n:'Self vs Cross Attention',c:'<strong>Self</strong>: Q,K,V from same sequence. <strong>Cross</strong>: Q from decoder, K,V from encoder.\n<strong>Causal mask</strong>: token i sees only tokens ≤ i.'},
+{n:'Why Attention Beats RNNs',c:'RNNs: O(n) path length, sequential. Attention: O(1) path length, fully parallel.\n\nMore GPUs = more throughput = better models. This is why scaling laws work.'}
+]},{l:'Architecture',pills:[
+{n:'Residual Stream',k:1,c:'<code>output = LayerNorm(x + Sublayer(x))</code>\n\nThe transformer is a shared highway. Each layer reads/writes to the residual stream. Gradients flow directly — enables 100+ layers.'},
+{n:'FFN Layers',c:'Each layer = attention + FFN. Hidden dim = 4× model dim. FFN stores factual knowledge — "Paris is the capital of France" lives in FFN weights.'},
+{n:'Encoder vs Decoder',c:'<strong>Encoder</strong> (BERT): bidirectional, understanding.\n<strong>Decoder</strong> (GPT): causal, generation.\n\nDecoder-only won — simpler, universal via prompting. All frontier LLMs are decoder-only.'}
+]},{l:'Position & Scale',pills:[
+{n:'RoPE',k:1,c:'Encode position by rotating Q,K in complex space. Dot product depends on relative position.\n\nDominant in LLaMA, Mistral, Qwen. Context extension via frequency modification (YaRN).'},
+{n:'Scaling Laws',k:1,c:'Loss ∝ N^(-α), D^(-β), C^(-γ). Chinchilla: scale model and data equally. ~20 tokens per parameter.\n\nGPT-3 was undertrained. LLaMA proved smaller + more data wins for inference cost.'}
 ]}
 ]},
-{n:4,slug:'tokenizer-from-scratch',title:'Tokenizer from Scratch',desc:'BPE algorithm, multilingual analysis',papers:['Sennrich et al. 2016 (BPE)'],cats:[
-{label:'Tokenization',pills:[
-{name:'BPE',key:1,c:'Start with characters, iteratively merge most frequent pair:\n\n["l","o","w"] → ["lo","w"] → ["low"]\n\nCommon words = single tokens. Rare words = subwords. Vocabulary: 32K-128K tokens.\n\nGPT-4, LLaMA use BPE variants. The vocabulary defines what the model "sees."'},
-{name:'Tokenization Impact',c:'• Numbers split inconsistently → arithmetic is hard\n• English-trained tokenizers 3-5× less efficient for Chinese/Hindi\n• Code: whitespace handling varies wildly\n\nLLaMA-3 expanded from 32K→128K vocabulary — improved multilingual efficiency 30-40%.'}
+{n:4,sl:'tokenizer-from-scratch',t:'Tokenizer from Scratch',d:'BPE algorithm, multilingual analysis',pp:['Sennrich et al. 2016'],cats:[
+{l:'Tokenization',pills:[
+{n:'BPE',k:1,c:'Start with characters, iteratively merge most frequent pair. Common words = single tokens. Rare words = subwords. Vocabulary: 32K-128K tokens.'},
+{n:'Tokenization Impact',c:'Numbers split inconsistently → arithmetic is hard. English tokenizers 3-5× less efficient for Chinese/Hindi. LLaMA-3 expanded 32K→128K vocab — 30-40% multilingual improvement.'}
 ]}
 ]}
 ]},
-{id:'llms',label:'Phase 3 · Weeks 15–26',name:'LLMs — Training to Deployment',quote:'Training is once. Inference runs billions of times.',color:'var(--purple)',hex:'#a855f7',
-projects:[
-{n:5,slug:'pretrain-small-lm',title:'Pre-train a Small LM',desc:'125M parameter model on open data',papers:['Brown et al. 2020 (GPT-3)','Hoffmann et al. 2022 (Chinchilla)'],cats:[
-{label:'Pre-training',pills:[
-{name:'Next Token Prediction',key:1,c:'Given tokens 1..n-1, predict token n. <code>L = -Σ log P(xₜ | x₁...xₜ₋₁)</code>\n\nEvery token contributes to loss. The model learns grammar, facts, reasoning, code — everything — from this single objective.'},
-{name:'Data Quality',c:'Quality > quantity. Pipeline: language ID → quality filtering → deduplication (MinHash) → safety filtering.\n\nFineWeb (HuggingFace) showed careful curation matches 10× more unfiltered data.'},
-{name:'Mixed Precision',c:'Compute in BF16, keep master weights in FP32. BF16: same range as FP32, less precision. No loss scaling needed.\n\n~2× throughput, ~50% memory savings.'}
-]},
-{label:'Hardware',pills:[
-{name:'Memory Hierarchy',key:1,c:'GPU memory hierarchy: Registers (~0.3ns) → Shared/L1 (228KB) → L2 (50MB) → HBM (80GB, 3.35 TB/s).\n\n<strong>HBM bandwidth is THE inference bottleneck.</strong> 70B FP16 = 140GB. Reading once = 42ms/token = ~24 tok/s. Memory-bound, not compute-bound.'},
-{name:'Roofline Model',key:1,c:'Every operation is either:\n• <strong>Compute-bound</strong>: limited by FLOPS\n• <strong>Memory-bound</strong>: limited by bandwidth\n\nArithmetic intensity = FLOPs/bytes.\n\nLLM decode is almost always memory-bound. This is why quantization (fewer bytes) helps more than faster compute.'}
+{id:'l',l:'Phase 3',n:'LLMs — Training to Deployment',s:'Weeks 15–26',clr:'var(--cyan)',hex:'#0891b2',pj:[
+{n:5,sl:'pretrain-small-lm',t:'Pre-train a Small LM',d:'125M parameter model on open data',pp:['Brown 2020','Hoffmann 2022'],cats:[
+{l:'Pre-training',pills:[
+{n:'Next Token Prediction',k:1,c:'Given tokens 1..n-1, predict token n. The model learns grammar, facts, reasoning, code — everything — from this single objective.'},
+{n:'Data Quality',c:'Quality > quantity. Pipeline: language ID → quality filtering → deduplication (MinHash) → safety filtering.'},
+{n:'Roofline Model',k:1,c:'Every operation is either compute-bound or memory-bound. Arithmetic intensity = FLOPs/bytes.\n\nLLM decode is almost always memory-bound. Quantization (fewer bytes) helps more than faster compute.'}
 ]}
 ]},
-{n:6,slug:'finetune-llm',title:'Fine-tune an LLM',desc:'LoRA/QLoRA on an open-source model',papers:['Hu et al. 2021 (LoRA)','Dettmers et al. 2023 (QLoRA)'],cats:[
-{label:'Fine-tuning',pills:[
-{name:'LoRA',key:1,c:'Instead of updating full W (d×d), learn W\' = W + BA where B is d×r, A is r×d.\n\nWith r=16, d=4096: 131K params per layer vs 16.7M — 128× reduction.\n\nWhy: fine-tuning updates are inherently low-rank. At inference: merge W+BA. Zero overhead.'},
-{name:'QLoRA',c:'4-bit quantized base + LoRA in BF16. NF4 quantization + double quantization + paged optimizers.\n\nFine-tune 65B model on one 48GB GPU. Made LLM fine-tuning accessible.'},
-{name:'SFT',c:'Train on (instruction, response) pairs. LIMA insight: 1000 curated examples > 50K mediocre ones.\n\nChat templates matter: wrong template = broken behavior.'}
-]},
-{label:'Quantization',pills:[
-{name:'INT8/INT4/FP8',c:'• FP16: 2 bytes/param. 7B = 14GB.\n• INT8: 1 byte. 7B = 7GB. ~2× speed. Minimal quality loss.\n• INT4: 0.5 bytes. 7B = 3.5GB. Fits consumer GPUs.\n• FP8: H100 Transformer Engine. ~2× vs BF16.\n\nGPTQ: Hessian-based INT4. AWQ: activation-aware. Both standard for inference.'}
+{n:6,sl:'finetune-llm',t:'Fine-tune an LLM',d:'LoRA/QLoRA on an open-source model',pp:['Hu et al. 2021 (LoRA)'],cats:[
+{l:'Fine-tuning',pills:[
+{n:'LoRA',k:1,c:'W\' = W + BA where B is d×r, A is r×d. With r=16: 128× parameter reduction. Fine-tuning updates are inherently low-rank. At inference: merge W+BA, zero overhead.'},
+{n:'QLoRA',c:'4-bit quantized base + LoRA in BF16. Fine-tune 65B on one 48GB GPU. Made LLM fine-tuning accessible.'},
+{n:'Quantization',c:'FP16: 2 bytes/param. INT8: 1 byte, ~2× speed. INT4: 0.5 bytes, fits consumer GPUs. GPTQ, AWQ are standard methods.'}
 ]}
 ]},
-{n:7,slug:'alignment-lab',title:'Alignment Lab',desc:'DPO, reward models, red-teaming',papers:['Ouyang et al. 2022 (InstructGPT)','Rafailov et al. 2023 (DPO)'],cats:[
-{label:'Alignment',pills:[
-{name:'RLHF',key:1,c:'Three stages: SFT → Reward Model (pairwise preferences) → PPO (optimize policy against RM with KL penalty).\n\nKL penalty prevents reward hacking. This pipeline made ChatGPT "feel different."'},
-{name:'DPO',key:1,c:'Skip reward model and RL. Train directly on preference pairs:\n\n<code>L = -log σ(β[log π(y_w)/π_ref(y_w) - log π(y_l)/π_ref(y_l)])</code>\n\nSimpler, more stable, cheaper. Dominant method for open-source alignment.'},
-{name:'Safety Challenges',c:'<strong>Reward hacking</strong>: model exploits RM instead of genuinely improving.\n<strong>Sycophancy</strong>: trained to agree with users instead of being truthful.\n\nFundamental challenges. DPO helps but doesn\'t fully solve.'}
+{n:7,sl:'alignment-lab',t:'Alignment Lab',d:'DPO, reward models, red-teaming',pp:['Ouyang 2022','Rafailov 2023'],cats:[
+{l:'Alignment',pills:[
+{n:'RLHF',k:1,c:'SFT → Reward Model (preferences) → PPO (optimize with KL penalty). Made ChatGPT "feel different."'},
+{n:'DPO',k:1,c:'Skip reward model. Train directly on preference pairs. Simpler, more stable, cheaper. Dominant for open-source alignment.'}
 ]}
 ]},
-{n:8,slug:'llm-inference-optimizer',title:'LLM Inference Optimizer',desc:'KV cache, serving benchmarks, cost analysis',papers:['Kwon et al. 2023 (vLLM)','Dao et al. 2022 (FlashAttention)'],cats:[
-{label:'Inference',pills:[
-{name:'KV Cache',key:1,c:'Store previously computed K,V tensors. Each new token only computes its own Q,K,V.\n\nLLaMA-3-70B at 8K context: ~8GB cache per request. GQA (fewer KV heads) shrinks this.'},
-{name:'PagedAttention',key:1,c:'OS virtual memory for KV cache. Fixed-size pages, allocated on demand. ~20× less memory waste. Higher batch sizes = higher throughput.\n\nPrefix caching: shared system prompts cached once. 30-40% latency reduction.'},
-{name:'Speculative Decoding',c:'Small draft model generates k tokens fast. Large model verifies all k in one pass. If accepted: k tokens for ~1 large forward pass. 2-3× speedup.'},
-{name:'Continuous Batching',c:'Dynamic batching — new requests join in-flight. Batch composition changes each step. 5-10× throughput vs static batching.'}
-]},
-{label:'Economics',pills:[
-{name:'Inference Cost',c:'70B FP16 on 4×A100: ~$12/hr, ~2500 tok/s, ~$0.0014/1K tokens.\nGPT-4 API: ~$0.015/1K tokens.\n\nSelf-hosting: ~10× cheaper at scale. Decision: <1M tok/day → API. >100M → self-host.'},
-{name:'The Full Hardware Story',c:'Sand → silicon wafers → transistors (lithography). TSMC makes 90% of advanced chips. ASML makes the only EUV machines ($200M each).\n\nNVIDIA + CUDA = software lock-in. H100 GPUs have years-long waitlists. TSMC in Taiwan = geopolitical risk. Understanding this explains AI economics.'}
+{n:8,sl:'llm-inference-optimizer',t:'LLM Inference Optimizer',d:'KV cache, serving benchmarks, cost analysis',pp:['Kwon 2023 (vLLM)','Dao 2022'],cats:[
+{l:'Inference',pills:[
+{n:'KV Cache',k:1,c:'Store previously computed K,V. Each new token only computes its own. LLaMA-70B at 8K: ~8GB per request.'},
+{n:'PagedAttention',k:1,c:'OS virtual memory for KV cache. Fixed-size pages, on-demand allocation. ~20× less memory waste. Prefix caching: 30-40% latency reduction.'},
+{n:'Continuous Batching',c:'New requests join in-flight batches. 5-10× throughput vs static batching.'},
+{n:'The Hardware Story',c:'Sand → silicon → transistors. TSMC: 90% of advanced chips. ASML: only EUV machines. NVIDIA + CUDA = software lock-in. TSMC in Taiwan = geopolitical risk.'}
 ]}
 ]}
 ]},
-{id:'rag',label:'Phase 4 · Weeks 27–36',name:'RAG & AI Applications',quote:'Your model doesn\'t know your stuff. RAG fixes that.',color:'var(--amber)',hex:'#f59e0b',
-projects:[
-{n:9,slug:'rag-pipeline',title:'RAG Pipeline',desc:'Production retrieval augmented generation',papers:['Lewis et al. 2020 (RAG)'],cats:[
-{label:'Core RAG',pills:[
-{name:'Embeddings & Vector Search',key:1,c:'Embedding model maps text to high-dim space. Similar texts → geometrically close.\n\nVector DB (Pinecone, Qdrant, pgvector) stores vectors, enables fast ANN search via HNSW.\n\nPipeline: embed query → find nearest chunks → pass to LLM as context → generate grounded answer.'},
-{name:'BM25 & Hybrid Search',key:1,c:'BM25: 30-year-old TF-IDF ranking. Excels at exact keywords (error codes, product names).\n\nHybrid = BM25 + dense, fused with Reciprocal Rank Fusion. Almost always better than either alone.'},
-{name:'Chunking',c:'Split docs into embedding-sized pieces. Tension: larger = more context, less precision.\n\nRecursive (paragraph → sentence → word boundaries), semantic (merge by similarity), contextual (prepend summary per chunk).'},
-{name:'Reranking',key:1,c:'Two-stage: bi-encoder retrieves top-100 fast → cross-encoder reranks to top-10.\n\nCross-encoders see query+doc together — much more accurate. Too slow for first stage. 10-20% quality boost.'}
-]},
-{label:'Evaluation',pills:[
-{name:'RAGAS',c:'LLM-judged RAG quality: Faithfulness (claims grounded in context?), Answer Relevance, Context Recall, Context Precision.\n\nLow faithfulness = LLM problem. Low context recall = retrieval problem.'}
+{id:'r',l:'Phase 4',n:'RAG & AI Applications',s:'Weeks 27–36',clr:'var(--amber)',hex:'#d97706',pj:[
+{n:9,sl:'rag-pipeline',t:'RAG Pipeline',d:'Production retrieval augmented generation',pp:['Lewis et al. 2020'],cats:[
+{l:'Core RAG',pills:[
+{n:'Embeddings & Vector Search',k:1,c:'Map text to high-dim space. Similar texts → geometrically close. Vector DB enables fast ANN search. Pipeline: embed query → find nearest → pass to LLM → grounded answer.'},
+{n:'BM25 & Hybrid Search',k:1,c:'BM25 excels at exact keywords. Dense excels at semantics. Hybrid (RRF fusion) almost always beats either alone.'},
+{n:'Chunking',c:'Split docs into embedding-sized pieces. Recursive, semantic, or contextual (prepend summary per chunk). Tension: larger = more context, less precision.'},
+{n:'Reranking',k:1,c:'Bi-encoder retrieves top-100 fast → cross-encoder reranks to top-10. Cross-encoders see query+doc together. 10-20% quality boost.'}
 ]}
 ]},
-{n:10,slug:'advanced-rag',title:'Advanced RAG',desc:'GraphRAG, Self-RAG, multi-modal',papers:['Asai et al. 2023 (Self-RAG)','Microsoft 2024 (GraphRAG)'],cats:[
-{label:'Advanced',pills:[
-{name:'HyDE',c:'Generate hypothetical answer → embed that → search. Bridges query-document distribution gap. 10-20% improvement on ambiguous queries.'},
-{name:'GraphRAG',key:1,c:'Index docs as knowledge graph. Extract entities/relationships → detect communities → generate summaries.\n\nHandles "What are main themes across all docs?" — impossible for vector search.'},
-{name:'Self-RAG & CRAG',c:'Self-RAG: model decides when to retrieve and critiques its own output. CRAG: evaluator grades retrieved docs, falls back to web search if all irrelevant.'}
+{n:10,sl:'advanced-rag',t:'Advanced RAG',d:'GraphRAG, Self-RAG, multi-modal',pp:['Microsoft 2024'],cats:[
+{l:'Advanced',pills:[
+{n:'HyDE',c:'Generate hypothetical answer → embed that → search. Bridges query-document distribution gap.'},
+{n:'GraphRAG',k:1,c:'Index docs as knowledge graph. Entities + relationships → communities → summaries. Handles "what are the main themes?" — impossible for vector search.'},
+{n:'Self-RAG & CRAG',c:'Self-RAG: model decides when to retrieve and critiques output. CRAG: evaluator grades docs, falls back to web search if irrelevant.'}
 ]}
 ]},
-{n:11,slug:'enterprise-search-engine',title:'Enterprise Search Engine',desc:'Multi-source hybrid search with access control',papers:[],cats:[
-{label:'Enterprise',pills:[
-{name:'Multi-Tenancy',key:1,c:'Complete data isolation per organization. Strategies: namespace isolation, metadata filter (WHERE tenant_id=$1), separate index.\n\nOne cross-tenant leak = existential risk.'},
-{name:'Access Control',c:'Pre-filter by permissions or post-filter results. ACL sync from source systems (RBAC, groups) is the hard part.'},
-{name:'Connectors',c:'Each source needs: auth, change detection (webhooks/polling), content extraction, schema normalization, incremental sync.'}
+{n:11,sl:'enterprise-search-engine',t:'Enterprise Search Engine',d:'Multi-source hybrid search with ACL',pp:[],cats:[
+{l:'Enterprise',pills:[
+{n:'Multi-Tenancy',k:1,c:'Complete data isolation per org. Namespace isolation, metadata filters, or separate indexes. One cross-tenant leak = existential risk.'},
+{n:'Access Control',c:'Pre-filter by permissions or post-filter results. ACL sync from source systems is the hard part.'},
+{n:'Connectors',c:'Each source: auth, change detection, content extraction, schema normalization, incremental sync.'}
 ]}
 ]}
 ]},
-{id:'agents',label:'Phase 5 · Weeks 37–48',name:'Agentic AI',quote:'From answering questions to accomplishing goals.',color:'var(--red)',hex:'#ff3366',
-projects:[
-{n:12,slug:'ai-agent-from-scratch',title:'AI Agent from Scratch',desc:'Tool use, planning, memory — no frameworks',papers:['Yao et al. 2022 (ReAct)'],cats:[
-{label:'Core Shift',pills:[
-{name:'Chatbot vs Agent',key:1,c:'Chatbot answers questions. Agent accomplishes goals. The critical difference: agent controls its own iteration.\n\nChatbot: "Your PTO is 15 days." Agent: "Submitted PTO for Dec 23-27, notified your manager, blocked calendar. Approval pending."'},
-{name:'Tool Use / Function Calling',key:1,c:'Define tools as JSON schemas. Model decides WHEN to call and with WHAT params. Outputs structured JSON.\n\nTool quality > agent quality. Clear names, clear descriptions, minimal parameters.'},
-{name:'ReAct Loop',key:1,c:'Thought → Action → Observation → Thought → ...\n\nInterleaving reasoning with acting prevents hallucination. Model reasons about what to do, acts, observes, reasons again.'}
-]},
-{label:'Memory',pills:[
-{name:'Short-Term',c:'Context window = working memory. Strategies when exceeded: summarize older turns, keep last N, retrieve relevant past turns.'},
-{name:'Long-Term',c:'Store facts about users in vector DB. "Last time: VPN fix was updating Cisco AnyConnect." This makes AI feel intelligent across sessions.'},
-{name:'Task Scratchpad',c:'For complex tasks: structured state tracking progress, intermediate results, decisions. LangGraph formalizes this as typed state graph.'}
-]},
-{label:'Frameworks',pills:[
-{name:'LangGraph',key:1,c:'Agents as stateful graphs: nodes (LLM/tools), edges (transitions), shared state. Built-in persistence, streaming, human-in-the-loop.\n\nThe production choice for serious agents.'},
-{name:'CrewAI',c:'High-level: Agent (role, goal), Task, Crew. Great for prototypes when roles map to humans.'},
-{name:'AutoGen',c:'Multi-agent conversations. ConversableAgent: any entity that sends/receives messages. Strong for debate/verification patterns.'}
-]},
-{label:'Safety',pills:[
-{name:'Reliability Math',key:1,c:'Per-step 95%, 10 steps = 0.95¹⁰ = 60% end-to-end.\nPer-step 99%, 10 steps = 90%.\n\nImproving step reliability is THE highest-leverage work.'},
-{name:'Evals',c:'Evals = unit tests for AI. Golden dataset of 100+ (question, expected_answer) pairs. Run on every change. Block deployment if scores drop.'}
+{id:'a',l:'Phase 5',n:'Agentic AI',s:'Weeks 37–48',clr:'var(--red)',hex:'#dc2626',pj:[
+{n:12,sl:'ai-agent-from-scratch',t:'AI Agent from Scratch',d:'Tool use, planning, memory — no frameworks',pp:['Yao et al. 2022'],cats:[
+{l:'Core',pills:[
+{n:'Chatbot vs Agent',k:1,c:'Chatbot answers questions. Agent accomplishes goals. Agent controls its own iteration — decides tools, info gathering, and when it\'s done.'},
+{n:'Function Calling',k:1,c:'Define tools as JSON schemas. Model decides when to call and with what params. Tool quality > agent quality. Clear names, minimal parameters.'},
+{n:'ReAct Loop',k:1,c:'Thought → Action → Observation → repeat. Interleaving reasoning with acting prevents hallucination.'}
+]},{l:'Memory',pills:[
+{n:'Short-Term',c:'Context window = working memory. When exceeded: summarize older turns, keep last N, retrieve relevant past.'},
+{n:'Long-Term',c:'Store user facts in vector DB. Makes AI feel intelligent across sessions.'},
+{n:'LangGraph',k:1,c:'Agents as stateful graphs: nodes (LLM/tools), edges (transitions), shared state. Built-in persistence, streaming, human-in-the-loop. The production choice.'}
+]},{l:'Safety',pills:[
+{n:'Reliability Math',k:1,c:'Per-step 95%, 10 steps = 60% end-to-end. Per-step 99% = 90%. Improving step reliability is THE highest-leverage work.'},
+{n:'Evals',c:'Evals = unit tests for AI. 100+ golden examples. Run on every change. Block deployment if scores drop.'}
 ]}
 ]},
-{n:13,slug:'multi-agent-system',title:'Multi-Agent System',desc:'Specialized agents collaborating',papers:['Park et al. 2023 (Generative Agents)'],cats:[
-{label:'Patterns',pills:[
-{name:'Supervisor/Worker',c:'Supervisor decomposes task → delegates to specialists → aggregates. Example: "Onboard John Smith" → Okta + Slack + Jira + Email agents.'},
-{name:'Human-in-the-Loop',c:'Approval gates before high-impact actions. LangGraph interrupt nodes pause for human input. "About to delete 3 Jira boards (247 issues). Proceed?"'}
+{n:13,sl:'multi-agent-system',t:'Multi-Agent System',d:'Specialized agents collaborating',pp:[],cats:[
+{l:'Patterns',pills:[
+{n:'Supervisor / Worker',c:'Supervisor decomposes → delegates to specialists → aggregates. "Onboard John Smith" → Okta + Slack + Jira agents.'},
+{n:'Human-in-the-Loop',c:'Approval gates before high-impact actions. LangGraph interrupt nodes pause for human confirmation.'}
 ]}
 ]},
-{n:14,slug:'ai-product-simulator',title:'AI Product Simulator',desc:'Enterprise AI assistant prototype',papers:[],cats:[
-{label:'Architecture',pills:[
-{name:'Full Stack',c:'Input → Intent Classification → Entity Extraction → Multi-source Retrieval → Agent Reasoning → API Actions → Safety Checks → Streaming Response → Observability.'},
-{name:'Observability',c:'Log everything: traces, tokens, cost, latency breakdown. Dashboard: cost/tenant, P50/P95/P99 latency, error rate, quality scores over time.'}
+{n:14,sl:'ai-product-simulator',t:'AI Product Simulator',d:'Enterprise AI assistant prototype',pp:[],cats:[
+{l:'Architecture',pills:[
+{n:'Full Stack',c:'Intent → Retrieval → Agent Reasoning → API Actions → Safety → Streaming Response → Observability.'},
+{n:'Observability',c:'Log everything: traces, tokens, cost, latency. Dashboard: cost/tenant, P50/P95/P99, error rate, quality over time.'}
 ]}
 ]}
 ]},
-{id:'frontier',label:'Phase 6 · Ongoing',name:'The Frontier',quote:'The cutting edge moves fast. You move with it.',color:'var(--cyan)',hex:'#00d4ff',
-projects:[
-{n:15,slug:'diffusion-and-generation',title:'Diffusion & Generation',desc:'Diffusion models from scratch',papers:['Ho et al. 2020 (DDPM)'],cats:[{label:'Generative',pills:[
-{name:'Diffusion Process',c:'Forward: gradually add noise over T steps → pure noise. Reverse: train network to remove noise at each step.\n\nGeneration: start from noise → denoise → clean sample. Foundation of Stable Diffusion, DALL-E 2, Midjourney.'}
-]}]},
-{n:16,slug:'mamba-and-alternatives',title:'Mamba & Alternatives',desc:'State space models vs Transformers',papers:['Gu & Dao 2023 (Mamba)'],cats:[{label:'Beyond Transformers',pills:[
-{name:'Mamba / SSMs',key:1,c:'Compress context into fixed-size state. O(n) time, O(1) memory per token. Input-dependent parameters enable selective memory.\n\nTradeoff: struggles with precise retrieval. Hybrids (Mamba + Transformer) seek best of both.'}
-]}]},
-{n:17,slug:'reasoning-models',title:'Reasoning Models',desc:'Chain-of-thought, test-time compute',papers:['Wei et al. 2022 (CoT)'],cats:[{label:'Reasoning',pills:[
-{name:'Test-Time Compute',key:1,c:'Instead of prompting for CoT, train the model to natively generate reasoning tokens. That\'s o1/o3.\n\nSmaller model thinking longer can match larger model answering immediately. Scale compute at inference, not just training.'}
-]}]},
-{n:18,slug:'open-source-contribution',title:'Open Source Contribution',desc:'Contribute to a major AI project',papers:[],cats:[{label:'Community',pills:[
-{name:'Why Contribute',c:'Forces reading production code. Builds credibility and network. Start with docs/bugs, then features. Target: transformers, vLLM, LangChain, sentence-transformers.'}
-]}]}
+{id:'x',l:'Phase 6',n:'The Frontier',s:'Ongoing',clr:'var(--green)',hex:'#16a34a',pj:[
+{n:15,sl:'diffusion-and-generation',t:'Diffusion & Generation',d:'Diffusion models from scratch',pp:['Ho et al. 2020'],cats:[{l:'Generative',pills:[{n:'Diffusion Process',c:'Forward: add noise → pure noise. Reverse: train to remove noise. Foundation of Stable Diffusion, DALL-E 2, Midjourney.'}]}]},
+{n:16,sl:'mamba-and-alternatives',t:'Mamba & Alternatives',d:'State space models vs Transformers',pp:['Gu & Dao 2023'],cats:[{l:'Beyond Transformers',pills:[{n:'SSMs & Mamba',k:1,c:'Fixed-size state. O(n) time, O(1) memory/token. Input-dependent params for selective memory. Struggles with precise retrieval.'}]}]},
+{n:17,sl:'reasoning-models',t:'Reasoning Models',d:'Chain-of-thought, test-time compute',pp:['Wei et al. 2022'],cats:[{l:'Reasoning',pills:[{n:'Test-Time Compute',k:1,c:'Train the model to natively reason before answering (o1/o3). Smaller model thinking longer matches larger model answering immediately.'}]}]},
+{n:18,sl:'open-source-contribution',t:'Open Source Contribution',d:'Contribute to a major AI project',pp:[],cats:[{l:'Community',pills:[{n:'Why Contribute',c:'Forces reading production code. Builds credibility. Start with docs/bugs. Target: transformers, vLLM, LangChain.'}]}]}
 ]}
 ];
 
-const CONNECTIONS=[
-{t:'Why CUDA → Why inference is expensive',b:'CUDA locked AI into NVIDIA GPUs. Transformers need massive matrix multiplications — GPUs are the only hardware that runs them. Inference costs dominate AI economics.',c:'var(--green)'},
-{t:'Why Transformers → Why Scaling Works',b:'RNNs were sequential. Transformers parallelize everything — more GPUs = more throughput = directly better models. Scaling laws hold because of this parallelism.',c:'var(--blue)'},
-{t:'Why RLHF → Why ChatGPT felt different',b:'Pre-training + fine-tuning = capable but unpredictable. RLHF injects human preferences — makes the model refuse harm, admit uncertainty, feel aligned.',c:'var(--purple)'},
-{t:'Why Embeddings → Why RAG works',b:'Embeddings place similar meanings close in vector space. RAG: embed docs + query → find closest → give to model. Solves "model doesn\'t know your stuff" without retraining.',c:'var(--amber)'},
-{t:'Why Quantization → Why Edge AI works',b:'FP16 70B = 140GB. 4-bit = ~35GB (fits a workstation). 7B at 4-bit runs on a phone. Same intelligence, less precise numbers.',c:'var(--red)'},
-{t:'Why Chain-of-Thought → Why o1/o3 exist',b:'Asking "think step by step" improves reasoning. OpenAI trained the model to natively reason before answering. Test-time compute scaling: think longer = better answers.',c:'var(--cyan)'}
+const CONN=[
+{t:'Why CUDA → Why inference is expensive',b:'CUDA locked AI into NVIDIA GPUs. Transformers need massive matrix multiply — GPUs are the only hardware that scales. Inference costs dominate AI economics.',c:'var(--accent)'},
+{t:'Why Transformers → Why Scaling Works',b:'RNNs were sequential. Transformers parallelize — more GPUs = better models directly.',c:'var(--purple)'},
+{t:'Why RLHF → Why ChatGPT felt different',b:'RLHF injects human preferences — makes the model refuse harm, admit uncertainty, feel aligned.',c:'var(--cyan)'},
+{t:'Why Embeddings → Why RAG works',b:'Similar meanings → close in vector space. Embed docs + query → find closest → give to model. No retraining needed.',c:'var(--amber)'},
+{t:'Why Quantization → Why Edge AI works',b:'FP16 70B = 140GB. 4-bit = ~35GB. 7B at 4-bit runs on a phone. Same intelligence, fewer bits.',c:'var(--red)'},
+{t:'Why CoT → Why o1/o3 exist',b:'Step-by-step reasoning improved results. OpenAI trained this natively. Test-time compute: think longer = better.',c:'var(--green)'}
 ];
 
-// ── STATE ──
-let state=JSON.parse(localStorage.getItem('aijs')||'{}');
-if(!state.learned)state.learned={};
-if(!state.status)state.status={};
+// State
+let S=JSON.parse(localStorage.getItem('aij2')||'{}');
+if(!S.l)S.l={};if(!S.st)S.st={};
+const save=()=>localStorage.setItem('aij2',JSON.stringify(S));
+const cntPills=()=>{let c=0;P.forEach(ph=>ph.pj.forEach(p=>p.cats.forEach(cat=>c+=cat.pills.length)));return c};
 
-function save(){localStorage.setItem('aijs',JSON.stringify(state))}
-
-// ── RENDER MAP ──
+// Map
 function renderMap(){
-  const el=document.getElementById('page-map');
-  el.innerHTML=PHASES.map(ph=>`
-<div class="phase${state._openPhase===ph.id?' open':''}" data-ph="${ph.id}">
-  <div class="phase-head" onclick="togglePh('${ph.id}')">
-    <div class="phase-dot" style="background:${ph.color}12;color:${ph.color}">
-      <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-    </div>
-    <div class="phase-meta">
-      <div class="phase-label">${ph.label}</div>
-      <div class="phase-name" style="color:${ph.color}">${ph.name}</div>
-      <div class="phase-quote">${ph.quote}</div>
-    </div>
-    <div class="phase-chevron"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+  document.getElementById('p-map').innerHTML=P.map(ph=>`
+<div class="phase${S._op===ph.id?' open':''}" data-ph="${ph.id}">
+  <div class="phase-head" onclick="this.parentElement.classList.toggle('open')">
+    <div class="phase-indicator" style="background:${ph.clr}"></div>
+    <div class="phase-meta"><div class="phase-label">${ph.n}</div><div class="phase-sub">${ph.s}</div></div>
+    <div class="phase-chevron">›</div>
   </div>
   <div class="phase-body">
-    ${ph.projects.map(p=>{
-      const st=state.status[p.slug]||'not-started';
-      const stClass=st==='in-progress'?' in-progress':st==='complete'?' complete':'';
-      const stLabel=st==='in-progress'?'In Progress':st==='complete'?'Complete':'Not Started';
-      return `
-    <div class="proj${state._openProj===p.slug?' open':''}" data-pj="${p.slug}">
-      <div class="proj-head" onclick="togglePj('${p.slug}')">
-        <div class="proj-num" style="background:${ph.color}15;color:${ph.color}">${p.n}</div>
-        <div class="proj-info"><div class="proj-title">${p.title}</div><div class="proj-desc">${p.desc}</div></div>
-        <div class="proj-status${stClass}">${stLabel}</div>
-        <div class="proj-arrow"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
-      </div>
-      <div class="proj-content">
-        ${p.cats.map(cat=>`
-        <div class="cat">
-          <div class="cat-label">${cat.label}</div>
-          <div class="pills">
-            ${cat.pills.map(pill=>{
-              const learned=state.learned[pill.name];
-              return `<div class="pill${pill.key?' key':''}${learned?' learned':''}" tabindex="0" style="${pill.key?`color:${ph.color}`:''}" onclick="openSheet('${ph.label}','${pill.name.replace(/'/g,"\\'")}',this,'${ph.color}')" onkeydown="if(event.key==='Enter')this.click()" data-c="${encodeURIComponent(pill.c||'')}">
-                ${pill.key?`<span class="k" style="background:${ph.color}"></span>`:''}${pill.name}
-              </div>`;
-            }).join('')}
-          </div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-    }).join('')}
+  ${ph.pj.map(p=>{const st=S.st[p.sl]||'todo';return`
+  <div class="proj" data-pj="${p.sl}">
+    <div class="proj-head" onclick="this.parentElement.classList.toggle('open')">
+      <div class="proj-num" style="background:${ph.hex}10;color:${ph.hex}">${p.n}</div>
+      <div class="proj-info"><div class="proj-title">${p.t}</div><div class="proj-desc">${p.d}</div></div>
+      <span class="proj-badge ${st}">${st==='active'?'Active':st==='done'?'Done':'Todo'}</span>
+      <div class="proj-expand">›</div>
+    </div>
+    <div class="proj-content">
+    ${p.cats.map(c=>`<div class="cat"><div class="cat-label">${c.l}</div><div class="pills">${c.pills.map(pill=>`<button class="pill${pill.k?' key':''}${S.l[pill.n]?' learned':''}" ${pill.k?`style="color:${ph.hex}"`:''} onclick="openSh('${ph.l}','${pill.n.replace(/'/g,"\\'")}',this,'${ph.hex}')" data-c="${encodeURIComponent(pill.c||'')}">${pill.k?`<span class="dot" style="background:${ph.hex}"></span>`:''}${pill.n}</button>`).join('')}</div></div>`).join('')}
+    </div>
+  </div>`;}).join('')}
   </div>
 </div>`).join('')+`
-<div class="conn-section">
-  <div class="conn-title">How it all connects</div>
-  ${CONNECTIONS.map(c=>`<div class="conn" style="border-left-color:${c.c}"><h4 style="color:${c.c}">${c.t}</h4><p>${c.b}</p></div>`).join('')}
+<div class="conn-section"><div class="conn-section-title">How it all connects</div>
+${CONN.map(c=>`<div class="conn" style="border-left-color:${c.c}"><h4 style="color:${c.c}">${c.t}</h4><p>${c.b}</p></div>`).join('')}
 </div>`;
 }
 
-// ── RENDER ROADMAP ──
-function renderRoadmap(){
-  const el=document.getElementById('page-roadmap');
-  el.innerHTML=PHASES.map(ph=>`
-<div class="road-phase">
-  <div class="road-phase-title"><span class="dot" style="background:${ph.color}"></span><span style="color:${ph.color}">${ph.name}</span></div>
-  ${ph.projects.map(p=>{
-    const st=state.status[p.slug]||'not-started';
-    return `
-  <div class="road-card">
-    <div class="road-num" style="background:${ph.color}15;color:${ph.color}">${p.n}</div>
-    <div class="road-info">
-      <div class="road-title">${p.title}</div>
-      <div class="road-desc">${p.desc}</div>
-      ${p.papers.length?`<div class="road-papers">${p.papers.join(' · ')}</div>`:''}
+// Roadmap
+function renderRoad(){
+  document.getElementById('p-roadmap').innerHTML=P.map(ph=>`
+<div class="road-group">
+  <div class="road-group-title"><span class="dot" style="background:${ph.clr}"></span>${ph.n} <span style="color:var(--text-3);font-weight:300;font-size:.75rem">${ph.s}</span></div>
+  ${ph.pj.map(p=>{const st=S.st[p.sl]||'todo';return`
+  <div class="road-item">
+    <div class="road-num" style="background:${ph.hex}10;color:${ph.hex}">${p.n}</div>
+    <div class="road-info"><div class="road-title">${p.t}</div><div class="road-sub">${p.pp.join(' · ')||p.d}</div></div>
+    <div class="road-btns">
+      <button class="road-btn${st==='todo'?' on':''}" onclick="setSt('${p.sl}','todo')">Todo</button>
+      <button class="road-btn${st==='active'?' on':''}" onclick="setSt('${p.sl}','active')">Active</button>
+      <button class="road-btn${st==='done'?' on':''}" onclick="setSt('${p.sl}','done')">Done</button>
     </div>
-    <div class="road-actions">
-      <button class="road-btn${st==='not-started'?' active-status':''}" onclick="setStatus('${p.slug}','not-started')">Todo</button>
-      <button class="road-btn${st==='in-progress'?' active-status':''}" onclick="setStatus('${p.slug}','in-progress')">Active</button>
-      <button class="road-btn${st==='complete'?' active-status':''}" onclick="setStatus('${p.slug}','complete')">Done</button>
-    </div>
-  </div>`;
-  }).join('')}
+  </div>`;}).join('')}
 </div>`).join('');
 }
 
-// ── RENDER STATS ──
+// Stats
 function renderStats(){
-  const el=document.getElementById('page-stats');
-  const totalPills=document.querySelectorAll?countPills():0;
-  const learnedCount=Object.keys(state.learned).length;
-  const completedProjects=Object.values(state.status).filter(s=>s==='complete').length;
-  const inProgressProjects=Object.values(state.status).filter(s=>s==='in-progress').length;
-  const pct=totalPills>0?Math.round(learnedCount/totalPills*100):0;
-
-  let phaseStats=PHASES.map(ph=>{
-    let total=0,learned=0;
-    ph.projects.forEach(p=>p.cats.forEach(c=>c.pills.forEach(pill=>{total++;if(state.learned[pill.name])learned++})));
-    const ppct=total>0?Math.round(learned/total*100):0;
-    return {name:ph.name,color:ph.hex,total,learned,pct:ppct};
-  });
-
-  el.innerHTML=`
-<div class="stats-grid">
-  <div class="stats-card"><div class="stats-card-val" style="color:var(--green)">${learnedCount}</div><div class="stats-card-label">Concepts Learned</div><div class="stats-card-bar"><div class="stats-card-bar-fill" style="width:${pct}%;background:var(--green)"></div></div></div>
-  <div class="stats-card"><div class="stats-card-val" style="color:var(--blue)">${completedProjects}</div><div class="stats-card-label">Projects Complete</div><div class="stats-card-bar"><div class="stats-card-bar-fill" style="width:${completedProjects/18*100}%;background:var(--blue)"></div></div></div>
-  <div class="stats-card"><div class="stats-card-val" style="color:var(--amber)">${inProgressProjects}</div><div class="stats-card-label">In Progress</div><div class="stats-card-bar"><div class="stats-card-bar-fill" style="width:${inProgressProjects/18*100}%;background:var(--amber)"></div></div></div>
-  <div class="stats-card"><div class="stats-card-val" style="color:var(--purple)">${pct}%</div><div class="stats-card-label">Overall Progress</div><div class="stats-card-bar"><div class="stats-card-bar-fill" style="width:${pct}%;background:var(--purple)"></div></div></div>
+  const tot=cntPills(),lrn=Object.keys(S.l).length,done=Object.values(S.st).filter(s=>s==='done').length,act=Object.values(S.st).filter(s=>s==='active').length,pct=tot?Math.round(lrn/tot*100):0;
+  const phs=P.map(ph=>{let t=0,l=0;ph.pj.forEach(p=>p.cats.forEach(c=>c.pills.forEach(pill=>{t++;if(S.l[pill.n])l++})));return{n:ph.n,hex:ph.hex,t,l,p:t?Math.round(l/t*100):0}});
+  document.getElementById('p-stats').innerHTML=`
+<div class="stats-big">
+  <div class="stats-big-card"><div class="stats-big-val" style="color:var(--accent)">${lrn}</div><div class="stats-big-label">Concepts Learned</div><div class="stats-big-bar"><div style="width:${pct}%;background:var(--accent)"></div></div></div>
+  <div class="stats-big-card"><div class="stats-big-val" style="color:var(--green)">${done}</div><div class="stats-big-label">Projects Complete</div><div class="stats-big-bar"><div style="width:${done/18*100}%;background:var(--green)"></div></div></div>
+  <div class="stats-big-card"><div class="stats-big-val" style="color:var(--amber)">${act}</div><div class="stats-big-label">In Progress</div><div class="stats-big-bar"><div style="width:${act/18*100}%;background:var(--amber)"></div></div></div>
+  <div class="stats-big-card"><div class="stats-big-val">${pct}%</div><div class="stats-big-label">Overall Progress</div><div class="stats-big-bar"><div style="width:${pct}%;background:var(--purple)"></div></div></div>
 </div>
-<div class="phase-breakdown">
-  <div class="phase-breakdown-title">Progress by Phase</div>
-  ${phaseStats.map(ps=>`
-  <div class="pb-row">
-    <span class="pb-label" style="color:${ps.color}">${ps.name}</span>
-    <div class="pb-bar"><div class="pb-bar-fill" style="width:${ps.pct}%;background:${ps.color}"></div></div>
-    <span class="pb-pct">${ps.learned}/${ps.total}</span>
-  </div>`).join('')}
+<div class="breakdown"><div class="breakdown-title">By Phase</div>
+${phs.map(p=>`<div class="breakdown-row"><span class="breakdown-label">${p.n}</span><div class="breakdown-bar"><div style="width:${p.p}%;background:${p.hex}"></div></div><span class="breakdown-pct">${p.l}/${p.t}</span></div>`).join('')}
 </div>`;
 }
 
-function countPills(){let c=0;PHASES.forEach(ph=>ph.projects.forEach(p=>p.cats.forEach(cat=>c+=cat.pills.length)));return c}
-
-// ── INTERACTIONS ──
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-selected','false')});
-  document.getElementById('page-'+id).classList.add('active');
-  document.getElementById('tab-'+id).classList.add('active');
-  document.getElementById('tab-'+id).setAttribute('aria-selected','true');
-  if(id==='stats')renderStats();
-  if(id==='roadmap')renderRoadmap();
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  document.getElementById('t-'+id).classList.add('active');
+  if(id==='stats')renderStats();if(id==='roadmap')renderRoad();
 }
 
-function togglePh(id){
-  const el=document.querySelector(`[data-ph="${id}"]`);
-  const isOpen=el.classList.contains('open');
-  el.classList.toggle('open');
-  state._openPhase=isOpen?null:id;
-}
+function setSt(sl,st){S.st[sl]=st;save();renderRoad();renderMap();upTop()}
 
-function togglePj(slug){
-  const el=document.querySelector(`[data-pj="${slug}"]`);
-  const isOpen=el.classList.contains('open');
-  el.classList.toggle('open');
-  state._openProj=isOpen?null:slug;
-}
-
-function setStatus(slug,status){
-  state.status[slug]=status;save();renderRoadmap();renderMap();updateTopStats();
-}
-
-const ov=document.getElementById('ov'),sh=document.getElementById('sh'),shIn=document.getElementById('shInner');
-let currentPill=null;
-
-function openSheet(phase,name,el,color){
-  const raw=decodeURIComponent(el.dataset.c);if(!raw)return;
-  currentPill=el;
-  shIn.innerHTML=`
-    <div class="sheet-phase">${phase}</div>
-    <div class="sheet-title" style="color:${color}">${name}</div>
-    <div class="sheet-body">${raw.replace(/\n/g,'<br>')}</div>
-    <div class="sheet-actions">
-      <button class="sheet-btn primary" onclick="markLearned()">Got it</button>
-      <button class="sheet-btn" onclick="closeSheet()">Close</button>
-    </div>`;
+const ov=document.getElementById('ov'),sh=document.getElementById('sh'),shI=document.getElementById('shI');
+let curPill=null;
+function openSh(phase,name,el,color){
+  const raw=decodeURIComponent(el.dataset.c);if(!raw)return;curPill=el;
+  shI.innerHTML=`<div class="sheet-label">${phase}</div><div class="sheet-title">${name}</div><div class="sheet-body">${raw.replace(/\n/g,'<br>')}</div><div class="sheet-btns"><button class="sheet-btn primary" onclick="markL()">Got it</button><button class="sheet-btn" onclick="closeSh()">Close</button></div>`;
   ov.classList.add('on');sh.classList.add('on');
 }
-
-function closeSheet(){ov.classList.remove('on');sh.classList.remove('on')}
-function markLearned(){
-  if(currentPill){
-    const name=currentPill.textContent.trim();
-    if(state.learned[name]){delete state.learned[name];currentPill.classList.remove('learned')}
-    else{state.learned[name]=1;currentPill.classList.add('learned')}
-    save();updateTopStats();
-  }
-  closeSheet();
+function closeSh(){ov.classList.remove('on');sh.classList.remove('on')}
+function markL(){
+  if(curPill){const n=curPill.textContent.trim();if(S.l[n]){delete S.l[n];curPill.classList.remove('learned')}else{S.l[n]=1;curPill.classList.add('learned')}save();upTop()}closeSh()
 }
-ov.addEventListener('click',closeSheet);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+ov.onclick=closeSh;
+document.onkeydown=e=>{if(e.key==='Escape')closeSh()};
 
-function updateTopStats(){
-  const total=countPills(),learned=Object.keys(state.learned).length;
-  const completed=Object.values(state.status).filter(s=>s==='complete').length;
-  const pct=total>0?Math.round(learned/total*100):0;
-  let currentPhase=1;
-  PHASES.forEach((ph,i)=>{if(ph.projects.some(p=>state.status[p.slug]==='in-progress'||state.status[p.slug]==='complete'))currentPhase=i+1});
-  document.getElementById('s-concepts').textContent=learned;
-  document.getElementById('s-projects').textContent=completed+'/18';
-  document.getElementById('s-phase').textContent=currentPhase;
-  document.getElementById('s-pct').textContent=pct+'%';
-  document.getElementById('pFill').style.width=pct+'%';
+function upTop(){
+  const tot=cntPills(),lrn=Object.keys(S.l).length,done=Object.values(S.st).filter(s=>s==='done').length,pct=tot?Math.round(lrn/tot*100):0;
+  let cph=1;P.forEach((ph,i)=>{if(ph.pj.some(p=>S.st[p.sl]==='active'||S.st[p.sl]==='done'))cph=i+1});
+  document.getElementById('sv-c').textContent=lrn;
+  document.getElementById('sv-p').textContent=done+'/18';
+  document.getElementById('sv-ph').textContent=cph;
+  document.getElementById('sv-pct').textContent=pct+'%';
+  document.getElementById('pBar').style.width=pct+'%';
 }
 
-// ── INIT ──
-renderMap();renderRoadmap();updateTopStats();
+renderMap();renderRoad();upTop();
 </script>
 </body>
 </html>
