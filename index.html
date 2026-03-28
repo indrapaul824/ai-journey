@@ -602,7 +602,7 @@ a:hover { text-decoration: underline }
   color: var(--text);
 }
 
-/* Recommended Next Card */
+/* Resume / Start Learning Card */
 .rec-next-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -611,6 +611,15 @@ a:hover { text-decoration: underline }
   position: relative;
   overflow: hidden;
 }
+/* Accent stripe on the left edge */
+.rec-next-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--resume-accent, var(--accent));
+  border-radius: var(--radius) 0 0 var(--radius);
+}
 .rec-next-label {
   font-family: 'Outfit', sans-serif;
   font-size: .68rem;
@@ -618,7 +627,31 @@ a:hover { text-decoration: underline }
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--text-3);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+}
+.rec-next-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.rec-next-progress-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.rec-next-progress-bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width .4s ease;
+}
+.rec-next-progress-text {
+  font-size: .75rem;
+  color: var(--text-3);
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
 }
 .rec-next-badge {
   display: inline-flex;
@@ -630,34 +663,75 @@ a:hover { text-decoration: underline }
   border-radius: 100px;
   margin-bottom: 8px;
 }
+.rec-next-concept-preview {
+  margin-bottom: 16px;
+}
 .rec-next-name {
   font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 5px;
 }
 .rec-next-preview {
   font-size: .82rem;
   color: var(--text-2);
   line-height: 1.5;
-  margin-bottom: 12px;
 }
 .rec-next-btn {
   font-family: 'Outfit', sans-serif;
-  font-size: .82rem;
-  font-weight: 600;
-  padding: 10px 20px;
+  font-size: .95rem;
+  font-weight: 700;
+  padding: 13px 24px;
   border-radius: var(--radius-inner);
-  background: var(--accent);
+  background: var(--resume-accent, var(--accent));
   color: #fff;
   transition: all var(--transition);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: .01em;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--resume-accent, var(--accent)) 35%, transparent);
 }
-.rec-next-btn:hover { background: var(--accent-hover); transform: translateY(-1px) }
+.rec-next-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--resume-accent, var(--accent)) 45%, transparent);
+}
+.rec-next-btn-sub {
+  font-size: .72rem;
+  font-weight: 400;
+  opacity: .85;
+  margin-top: 2px;
+}
+.rec-next-btn-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .rec-next-complete {
   text-align: center;
-  padding: 12px 0;
+  padding: 16px 0;
   color: var(--text-2);
-  font-size: .88rem;
+  font-size: .95rem;
+}
+.rec-next-complete-icon {
+  font-size: 1.8rem;
+  margin-bottom: 6px;
+}
+
+/* Dashboard resume button enhancement */
+.current-resume-sub {
+  font-size: .72rem;
+  font-weight: 400;
+  opacity: .85;
+  margin-top: 2px;
+}
+.current-btn-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Section headings */
@@ -1943,6 +2017,73 @@ function navigateToProject(slug) {
   showView('projects', slug);
 }
 
+/* Finds the seqNum of a concept by name within the currently rendered project */
+function getConceptSeqNum(proj, conceptName) {
+  let seq = 0;
+  for (const cat of proj.cats) {
+    for (const pill of cat.pills) {
+      seq++;
+      if (pill.name === conceptName) return seq;
+    }
+  }
+  return null;
+}
+
+/* Opens and smoothly scrolls to a concept accordion by name */
+function openAndScrollToConcept(conceptName) {
+  const proj = PHASES.flatMap(ph => ph.projects).find(p => p.slug === currentProjectSlug);
+  if (!proj) return;
+  const seqNum = getConceptSeqNum(proj, conceptName);
+  if (!seqNum) return;
+
+  // Close any currently open concept
+  if (expandedConcept && expandedConcept !== conceptName) {
+    document.querySelectorAll('.concept-card-body.open').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.concept-card-expand.open').forEach(el => el.classList.remove('open'));
+  }
+  expandedConcept = conceptName;
+
+  const body = document.getElementById('concept-body-' + seqNum);
+  if (body) {
+    body.classList.add('open');
+    const header = body.previousElementSibling;
+    if (header) {
+      const chevron = header.querySelector('.concept-card-expand');
+      if (chevron) chevron.classList.add('open');
+      header.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  const card = document.getElementById('concept-' + seqNum);
+  if (card) {
+    setTimeout(() => {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+}
+
+/* Navigate to a project and auto-open the next unlearned concept */
+function navigateToProjectAndResume(slug) {
+  showView('projects', slug);
+  // After render, open the next concept
+  const proj = PHASES.flatMap(ph => ph.projects).find(p => p.slug === slug);
+  if (!proj) return;
+  const next = getNextConceptInOrder(proj);
+  if (next) {
+    setTimeout(() => openAndScrollToConcept(next.name), 80);
+  }
+}
+
+/* Returns the first unlearned concept in strict order (no key-concept priority) */
+function getNextConceptInOrder(proj) {
+  for (const cat of proj.cats) {
+    for (const pill of cat.pills) {
+      if (!state.learned[pill.name]) return pill;
+    }
+  }
+  return null;
+}
+
 /* ═══════════════════════════════════════════════════
    RENDER: DASHBOARD
    ═══════════════════════════════════════════════════ */
@@ -1979,6 +2120,10 @@ function renderDashboard() {
     const projPct = stats.total ? Math.round(stats.learned / stats.total * 100) : 0;
     const pdata = getProjectData(active.project.slug);
     const elevator = pdata ? pdata.elevator : active.project.desc;
+    const nextC = getNextConceptInOrder(active.project);
+    const isFirstConcept = stats.learned === 0;
+    const dashBtnLabel = isFirstConcept ? 'Start Learning →' : 'Resume Learning →';
+    const dashBtnSub = nextC ? `Continue with: ${nextC.name}` : '';
     html += `
       <div class="current-phase-badge" style="background:${active.phase.bgRaw || active.phase.bg};color:${active.phase.color}">${active.phase.name}</div>
       <div class="current-proj-title">${active.project.title}</div>
@@ -1987,7 +2132,12 @@ function renderDashboard() {
         <div class="current-concept-track"><div class="current-concept-fill" style="width:${projPct}%;background:${active.phase.color}"></div></div>
         <div class="current-concept-label">${stats.learned}/${stats.total} concepts</div>
       </div>
-      <button class="current-btn" onclick="navigateToProject('${active.project.slug}')">Continue Learning</button>`;
+      <button class="current-btn" style="background:${active.phase.color}" onclick="navigateToProjectAndResume('${active.project.slug}')">
+        <div class="current-btn-inner">
+          <span>${dashBtnLabel}</span>
+          ${dashBtnSub ? `<span class="current-resume-sub">${dashBtnSub}</span>` : ''}
+        </div>
+      </button>`;
   } else {
     html += `
       <div class="current-empty">
@@ -2140,25 +2290,52 @@ function renderProjectView(slug) {
     </div>
   </div>`;
 
-  html += '<div class="rec-next-card">';
-  if (recommended) {
-    const cdata = CONCEPTS[recommended.name];
+  // --- Resume / Start Learning Card ---
+  const nextConcept = getNextConceptInOrder(proj);
+  const accentColor = phase.color;
+  html += `<div class="rec-next-card" style="--resume-accent:${accentColor}">`;
+  if (nextConcept) {
+    const cdata = CONCEPTS[nextConcept.name];
     const preview = cdata ? getFirstSentence(cdata.content) : '';
-    html += `<div class="rec-next-label">Up Next</div>`;
-    if (recommended.key) {
-      html += `<div class="rec-next-badge" style="background:${phase.bgRaw || phase.bg};color:${phase.color}">${ICONS.star} Key Concept</div>`;
+    const isFirstConcept = stats.learned === 0;
+    const btnLabel = isFirstConcept ? 'Start Learning' : 'Resume Learning';
+    const btnArrow = '→';
+    html += `<div class="rec-next-label">${isFirstConcept ? 'Ready to begin' : 'Pick up where you left off'}</div>`;
+    html += `<div class="rec-next-progress-row">
+      <div class="rec-next-progress-bar-wrap">
+        <div class="rec-next-progress-bar-fill" style="width:${projPct}%;background:${accentColor}"></div>
+      </div>
+      <div class="rec-next-progress-text">${stats.learned} / ${stats.total}</div>
+    </div>`;
+    if (nextConcept.key) {
+      html += `<div class="rec-next-badge" style="background:${phase.bgRaw || phase.bg};color:${accentColor}">${ICONS.star} Key Concept</div>`;
     }
-    html += `<div class="rec-next-name" style="color:${phase.color}">${recommended.name}</div>`;
-    html += `<div class="rec-next-preview">${preview}</div>`;
-    html += `<button class="rec-next-btn" onclick="markConceptLearned('${escapeHtml(recommended.name)}')">Mark as learned</button>`;
+    html += `<div class="rec-next-concept-preview">
+      <div class="rec-next-name" style="color:${accentColor}">${nextConcept.name}</div>
+      ${preview ? `<div class="rec-next-preview">${preview}</div>` : ''}
+    </div>`;
+    html += `<button class="rec-next-btn" onclick="openAndScrollToConcept('${escapeHtml(nextConcept.name)}')">
+      <div class="rec-next-btn-inner">
+        <span>${btnLabel} ${btnArrow}</span>
+        <span class="rec-next-btn-sub">Continue with: ${nextConcept.name}</span>
+      </div>
+    </button>`;
   } else if (stats.total > 0) {
-    html += `<div class="rec-next-complete" style="background:${phase.bgRaw || phase.bg};padding:24px;border-radius:var(--radius-inner);margin:-24px;margin-bottom:-24px">
-      <div style="font-size:1.5rem;margin-bottom:8px">All concepts learned</div>
-      <div style="color:var(--text-2)">You're ready to build. ${st !== 'done' ? '<br>Mark this project complete?' : ''}</div>
-      ${st !== 'done' ? `<button class="rec-next-btn" style="margin-top:12px" onclick="handleStatusClick('${slug}','done',2,${stIdx})">Mark Complete</button>` : ''}
+    html += `<div class="rec-next-label">This project</div>`;
+    html += `<div class="rec-next-progress-row">
+      <div class="rec-next-progress-bar-wrap">
+        <div class="rec-next-progress-bar-fill" style="width:100%;background:${accentColor}"></div>
+      </div>
+      <div class="rec-next-progress-text">${stats.total} / ${stats.total}</div>
+    </div>`;
+    html += `<div class="rec-next-complete">
+      <div class="rec-next-complete-icon">🎉</div>
+      <div style="font-weight:700;margin-bottom:4px;color:var(--text)">All concepts complete!</div>
+      <div style="color:var(--text-2);font-size:.85rem;margin-bottom:${st !== 'done' ? '14px' : '0'}">You've mastered everything in this project.</div>
+      ${st !== 'done' ? `<button class="rec-next-btn" style="margin-top:4px" onclick="handleStatusClick('${slug}','done',2,${stIdx})">Mark Project Complete →</button>` : ''}
     </div>`;
   } else {
-    html += '<div class="rec-next-complete">No concepts tracked for this project.</div>';
+    html += '<div class="rec-next-complete">No concepts tracked for this project yet.</div>';
   }
   html += '</div></div>';
 
