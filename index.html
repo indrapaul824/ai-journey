@@ -3367,72 +3367,7 @@ function renderProjectView(slug) {
     html += '</ul>';
   }
 
-  if (pdata && pdata.prerequisites) {
-    const prereq = pdata.prerequisites;
-    html += `<div class="section-heading">${ICONS.tools} Prerequisites</div>`;
-    html += '<div class="prereq-grid">';
-    if (prereq.projects && prereq.projects.length > 0) {
-      html += '<div class="prereq-card"><div class="prereq-card-label">Required Projects</div><ul>';
-      prereq.projects.forEach(p => {
-        const pd = PROJECTS_DATA[p];
-        const title = pd ? pd.title : p;
-        html += `<li><span class="prereq-project-link" onclick="navigateToProject('${p}')">${title}</span></li>`;
-      });
-      html += '</ul></div>';
-    }
-    if (prereq.tools && prereq.tools.length > 0) {
-      html += '<div class="prereq-card"><div class="prereq-card-label">Tools Needed</div><ul>';
-      prereq.tools.forEach(t => { html += `<li>${t}</li>` });
-      html += '</ul></div>';
-    }
-    if (prereq.hardware) {
-      html += `<div class="prereq-card"><div class="prereq-card-label">Hardware</div><ul><li>${prereq.hardware}</li></ul></div>`;
-    }
-    if (prereq.time) {
-      html += `<div class="prereq-card"><div class="prereq-card-label">Time Estimate</div><ul><li>${prereq.time}</li></ul></div>`;
-    }
-    html += '</div>';
-  }
-
-  if (pdata && pdata.setup) {
-    html += `<div class="setup-section">
-      <button class="setup-toggle" onclick="toggleSetup(this)" aria-expanded="false">
-        <span>${ICONS.code} Setup Guide</span>
-        <span class="setup-toggle-icon">${ICONS.chevDown}</span>
-      </button>
-      <div class="setup-content">
-        <div class="setup-inner">`;
-    if (pdata.setup.steps) {
-      html += '<ol class="setup-steps">';
-      pdata.setup.steps.forEach(s => { html += `<li>${s}</li>` });
-      html += '</ol>';
-    }
-    if (pdata.setup.structure) {
-      html += `<pre>${escapeHtml(pdata.setup.structure)}</pre>`;
-    }
-    html += '</div></div></div>';
-  }
-
-  if (pdata && pdata.milestones && pdata.milestones.length > 0) {
-    html += `<div class="section-heading">${ICONS.rocket} Milestones</div>`;
-    html += '<div class="milestones-track">';
-    pdata.milestones.forEach((m, i) => {
-      html += `<div class="milestone-item">
-        <div class="milestone-line">
-          <div class="milestone-dot" style="border-color:${phase.color};color:${phase.color}">${i+1}</div>
-          ${i < pdata.milestones.length - 1 ? '<div class="milestone-connector"></div>' : ''}
-        </div>
-        <div class="milestone-content">
-          <div class="milestone-name">${m.name}</div>
-          <div class="milestone-desc">${m.description}</div>
-          <div class="milestone-criteria">Acceptance: ${m.criteria}</div>
-          <div class="milestone-time">${ICONS.clock} ${m.time}</div>
-        </div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
+  /* Concepts to Learn — moved up before Getting Started */
   if (proj.cats.length > 0) {
     html += `<div class="section-heading">${ICONS.brain} Concepts to Learn</div>`;
     let seqNum = 0;
@@ -3501,7 +3436,56 @@ function renderProjectView(slug) {
     });
   }
 
-  /* Build Guide — injected between Concepts and Resources */
+  /* Getting Started — Prerequisites + Setup merged, collapsed by default */
+  const hasPrereqs = pdata && pdata.prerequisites;
+  const hasSetup = pdata && pdata.setup;
+  if (hasPrereqs || hasSetup) {
+    html += `<div class="setup-section">
+      <button class="setup-toggle" onclick="toggleSetup(this)" aria-expanded="false">
+        <span>${ICONS.rocket} Getting Started <span style="font-weight:400;opacity:0.7;font-size:.85em">— Prerequisites, tools, and environment setup</span></span>
+        <span class="setup-toggle-icon">${ICONS.chevDown}</span>
+      </button>
+      <div class="setup-content">
+        <div class="setup-inner">`;
+    if (hasPrereqs) {
+      const prereq = pdata.prerequisites;
+      html += `<div style="margin-bottom:1.25rem"><div class="prereq-grid">`;
+      if (prereq.projects && prereq.projects.length > 0) {
+        html += '<div class="prereq-card"><div class="prereq-card-label">Required Projects</div><ul>';
+        prereq.projects.forEach(p => {
+          const pd = PROJECTS_DATA[p];
+          const title = pd ? pd.title : p;
+          html += `<li><span class="prereq-project-link" onclick="navigateToProject('${p}')">${title}</span></li>`;
+        });
+        html += '</ul></div>';
+      }
+      if (prereq.tools && prereq.tools.length > 0) {
+        html += '<div class="prereq-card"><div class="prereq-card-label">Tools Needed</div><ul>';
+        prereq.tools.forEach(t => { html += `<li>${t}</li>` });
+        html += '</ul></div>';
+      }
+      if (prereq.hardware) {
+        html += `<div class="prereq-card"><div class="prereq-card-label">Hardware</div><ul><li>${prereq.hardware}</li></ul></div>`;
+      }
+      if (prereq.time) {
+        html += `<div class="prereq-card"><div class="prereq-card-label">Time Estimate</div><ul><li>${prereq.time}</li></ul></div>`;
+      }
+      html += '</div></div>';
+    }
+    if (hasSetup) {
+      if (pdata.setup.steps) {
+        html += '<ol class="setup-steps">';
+        pdata.setup.steps.forEach(s => { html += `<li>${s}</li>` });
+        html += '</ol>';
+      }
+      if (pdata.setup.structure) {
+        html += `<pre>${escapeHtml(pdata.setup.structure)}</pre>`;
+      }
+    }
+    html += '</div></div></div>';
+  }
+
+  /* Build Guide — moved up before Resources */
   const buildGuide = BUILD_GUIDES[proj.slug];
   if (buildGuide) {
     html += renderBuildGuideSection(proj.slug, buildGuide, phase.color);
