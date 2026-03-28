@@ -1459,7 +1459,54 @@ const DIAGRAM_CONCEPTS = {
   'Probability Distributions': 'chartjs',
   'Information Theory': 'mermaid',
   'Optimization Theory': 'chartjs',
-  'Eigenvalues & SVD': 'roughjs'
+  'Eigenvalues & SVD': 'roughjs',
+  // Project 2: CNN Image Classifier
+  'Kernels & Weight Sharing': 'roughjs',
+  'ResNet & Skip Connections': 'mermaid',
+  'Autograd': 'mermaid',
+  'Supervised Learning Overview': 'chartjs',
+  'Model Evaluation Fundamentals': 'chartjs',
+  'Ensemble Methods & Gradient Boosting': 'mermaid',
+  // Project 3: Transformer from Scratch
+  'Scaled Dot-Product Attention': 'mermaid',
+  'Multi-Head Attention': 'roughjs',
+  'Residual Stream': 'mermaid',
+  'FFN Layers': 'chartjs',
+  'Encoder vs Decoder': 'mermaid',
+  'RoPE': 'chartjs',
+  'Scaling Laws': 'chartjs',
+  'FlashAttention & Efficient Attention': 'mermaid',
+  // Project 4: Tokenizer from Scratch
+  'BPE': 'mermaid',
+  // Project 5: Pre-train a Small LM
+  'Next Token Prediction': 'mermaid',
+  'Roofline Model': 'chartjs',
+  'MLOps Fundamentals': 'mermaid',
+  // Project 6: Fine-tune an LLM
+  'LoRA': 'roughjs',
+  'Quantization': 'chartjs',
+  // Projects 7-14 diagrams
+  'RLHF': 'mermaid',
+  'DPO': 'mermaid',
+  'KV Cache': 'mermaid',
+  'PagedAttention': 'mermaid',
+  'Continuous Batching': 'mermaid',
+  'Multimodal AI': 'mermaid',
+  'Embeddings & Vector Search': 'mermaid',
+  'BM25 & Hybrid Search': 'chartjs',
+  'Reranking': 'mermaid',
+  'Prompt Engineering': 'mermaid',
+  'GraphRAG': 'mermaid',
+  'Multi-Tenancy': 'mermaid',
+  'Chatbot vs Agent': 'mermaid',
+  'ReAct Loop': 'mermaid',
+  'Function Calling': 'mermaid',
+  'LangGraph': 'mermaid',
+  'Prompt Injection & Guardrails': 'mermaid',
+  'Reliability Math': 'chartjs',
+  'AI Cost Anatomy': 'chartjs',
+  'The AI Value Chain': 'mermaid',
+  'Build vs Buy vs Fine-Tune': 'mermaid'
 };
 
 /* ═══════════════════════════════════════════════════
@@ -3468,6 +3515,1364 @@ graph TB
     addText(375, 42, 'Rotate', c.text2, '11', 'middle', '600');
 
     addText(w/2, h - 5, 'A = U · Σ · Vᵀ — every matrix is rotation × scale × rotation', c.text2, '11');
+    break;
+  }
+
+  // --- Projects 7-14 ---
+
+  case 'RLHF': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-rlhf-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  BM["Base Model"] -->|"Fine-tune on demos"| SFT["SFT Model"]
+  SFT -->|"Collect human preferences"| RM["Reward Model"]
+  RM -->|"PPO + KL penalty"| AM["Aligned Model"]
+  style BM fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style SFT fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style RM fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style AM fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'DPO': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-dpo-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph RLHF["RLHF (3 stages)"]
+    direction LR
+    R1["SFT"] --> R2["Train Reward Model"] --> R3["PPO Optimization"]
+  end
+  subgraph DPO_path["DPO (1 stage)"]
+    direction LR
+    D1["Direct Optimization<br/>on Preference Pairs"]
+  end
+  P["Preference Data<br/>chosen vs rejected"] --> RLHF
+  P --> DPO_path
+  RLHF --> A1["Aligned Model"]
+  DPO_path --> A2["Aligned Model"]
+  style P fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style A1 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style A2 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style D1 fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'KV Cache': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-kvcache-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph Step1["Step 1: First token"]
+    direction LR
+    S1T["All tokens"] -->|"Compute"| S1KV["K₁,V₁ K₂,V₂ K₃,V₃"]
+    S1KV -->|"Store"| S1C["Cache: [K₁V₁, K₂V₂, K₃V₃]"]
+  end
+  subgraph Step2["Step 2: Next token"]
+    direction LR
+    S2T["New token only"] -->|"Compute"| S2KV["K₄,V₄"]
+    S2KV -->|"Append"| S2C["Cache: [K₁V₁, K₂V₂, K₃V₃, K₄V₄]"]
+  end
+  Step1 --> Step2
+  style S1T fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style S2T fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style S1C fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style S2C fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'PagedAttention': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-pagedattn-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph Traditional["Traditional: Contiguous Memory"]
+    direction LR
+    T1["Seq A ██████░░░░"] --- T2["Seq B ████░░░░░░"]
+    T3["░ = wasted memory"]
+  end
+  subgraph Paged["PagedAttention: Virtual Memory"]
+    direction LR
+    PT["Page Table"] --> P1["Block 1: Seq A"]
+    PT --> P2["Block 2: Seq B"]
+    PT --> P3["Block 3: Seq A"]
+    PT --> P4["Block 4: Seq B"]
+  end
+  Traditional -->|"vs"| Paged
+  style T3 fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style PT fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style P1 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style P2 fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style P3 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style P4 fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Continuous Batching': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-contbatch-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph Static["Static Batching"]
+    direction LR
+    SA["Req A ████████"] --- SB["Req B ████░░░░"]
+    SC["Req C ██░░░░░░"] --- SD["All wait for longest"]
+  end
+  subgraph Dynamic["Continuous Batching"]
+    direction LR
+    DA["Req A ████████"] --- DB["Req B ████"]
+    DB --- DE["Req D ████ ← joins!"]
+    DC["Req C ██"] --- DF["Req E ██████ ← joins!"]
+  end
+  Static -->|"vs"| Dynamic
+  style SD fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style DE fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style DF fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Multimodal AI': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-multimodal-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  IMG["Image Input"] --> VE["Vision Encoder<br/>(CLIP)"]
+  VE --> PROJ["Projection<br/>Layer"]
+  PROJ --> LLM["LLM"]
+  TXT["Text Input"] --> TOK["Tokenizer"] --> LLM
+  LLM --> OUT["Multimodal<br/>Response"]
+  style IMG fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style TXT fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style VE fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style PROJ fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style LLM fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style OUT fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Embeddings & Vector Search': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-embedvec-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  Q["Query"] --> EMB["Embed"]
+  EMB --> VS["Vector<br/>Search"]
+  VS --> TOP["Top-K<br/>Chunks"]
+  TOP --> CP["Construct<br/>Prompt"]
+  CP --> LLM["LLM"]
+  LLM --> ANS["Answer with<br/>Citations"]
+  style Q fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style VS fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style LLM fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style ANS fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'BM25 & Hybrid Search': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: ['Exact keyword\nqueries', 'Semantic\nqueries', 'Mixed\nqueries', 'Overall'],
+        datasets: [
+          { label: 'BM25 (sparse)', data: [92, 45, 60, 62], backgroundColor: c.blue + '99', borderColor: c.blue, borderWidth: 1 },
+          { label: 'Dense retrieval', data: [55, 88, 70, 71], backgroundColor: c.purple + '99', borderColor: c.purple, borderWidth: 1 },
+          { label: 'Hybrid (best of both)', data: [90, 85, 82, 86], backgroundColor: c.green + '99', borderColor: c.green, borderWidth: 1 }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          title: { display: true, text: 'Retrieval Accuracy by Query Type (%)', color: c.text2, font: { family: 'Outfit', size: 14, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2, font: { family: 'Outfit', size: 10 } }, grid: { color: c.gridLine } },
+          y: { min: 0, max: 100, ticks: { color: c.text2, callback: v => v + '%' }, grid: { color: c.gridLine }, title: { display: true, text: 'Recall@10', color: c.text2, font: { family: 'Outfit', size: 12 } } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'Reranking': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-reranking-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  DOCS["1M docs"] --> S1["Stage 1:<br/>Bi-encoder<br/>(fast)"]
+  S1 -->|"Top 100"| S2["Stage 2:<br/>Cross-encoder<br/>(accurate)"]
+  S2 -->|"Top 10"| LLM["LLM"]
+  style DOCS fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style S1 fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style S2 fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style LLM fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Prompt Engineering': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-prompteng-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TD
+  Q["Your Task"] --> D1{"Simple?"}
+  D1 -->|"Yes"| ZS["Zero-shot"]
+  D1 -->|"No"| D2{"Need examples?"}
+  D2 -->|"Yes"| FS["Few-shot"]
+  D2 -->|"No"| D3{"Needs reasoning?"}
+  D3 -->|"Yes"| COT["Chain-of-thought"]
+  D3 -->|"Multi-step"| DEC["Decompose into<br/>sub-tasks"]
+  style Q fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style ZS fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style FS fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style COT fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style DEC fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'GraphRAG': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-graphrag-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  subgraph Indexing["Offline Indexing"]
+    direction LR
+    DOC["Documents"] --> EE["Entity<br/>Extraction"]
+    EE --> KG["Knowledge<br/>Graph"]
+    KG --> CD["Community<br/>Detection"]
+    CD --> CS["Community<br/>Summaries"]
+  end
+  subgraph Query["Query Time"]
+    direction LR
+    QR["Query"] --> GT["Graph<br/>Traversal"]
+    QR --> SS["Summary<br/>Search"]
+    GT --> ANS["Answer"]
+    SS --> ANS
+  end
+  Indexing --> Query
+  style DOC fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style KG fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style CS fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style ANS fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Multi-Tenancy': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-multitenancy-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph NS["Namespace Isolation"]
+    direction TB
+    NS1["One Index"] --> NSF["Filter by namespace"]
+  end
+  subgraph MF["Metadata Filter"]
+    direction TB
+    MF1["Shared Index"] --> MFF["WHERE tenant_id = X"]
+  end
+  subgraph SI["Separate Index"]
+    direction TB
+    SI1["Tenant A Index"]
+    SI2["Tenant B Index"]
+  end
+  style NSF fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style MFF fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style SI1 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style SI2 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Chatbot vs Agent': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-chatvagent-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph Chatbot["Chatbot (Single Turn)"]
+    direction LR
+    CU["User"] --> CLLM["LLM"] --> CA["Answer"]
+  end
+  subgraph Agent["Agent (Multi-Step Loop)"]
+    direction LR
+    AU["User"] --> AT["Think"]
+    AT --> AC["Tool Call"]
+    AC --> AO["Observe"]
+    AO --> AT2["Think"]
+    AT2 --> AA["Answer"]
+  end
+  style CU fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style CA fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style AU fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style AC fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style AO fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style AA fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'ReAct Loop': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-react-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  T1["Thought:<br/>I need to search<br/>for password reset"] --> A1["Action:<br/>search_kb<br/>password reset"]
+  A1 --> O1["Observation:<br/>Found 3 results"]
+  O1 --> T2["Thought:<br/>Article 2 matches best"]
+  T2 --> F["Finish:<br/>Return answer"]
+  style T1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style A1 fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style O1 fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style T2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style F fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Function Calling': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-funccall-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+sequenceDiagram
+  participant U as User
+  participant L as LLM
+  participant S as System
+  U->>L: How do I reset my password?
+  L->>S: {"function": "search",<br/>"args": {"query": "password reset"}}
+  S->>L: [Result: Go to Settings > Security...]
+  L->>U: To reset your password,<br/>go to Settings > Security...
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'LangGraph': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-langgraph-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  R["Router"] -->|"intent=search"| RET["Retrieval<br/>Node"]
+  RET --> GEN["Generate<br/>Node"]
+  GEN --> END1["End"]
+  R -->|"intent=action"| TOOL["Tool<br/>Node"]
+  TOOL --> CONF["Confirm<br/>Node"]
+  CONF --> EXEC["Execute<br/>Node"]
+  EXEC --> END2["End"]
+  style R fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style RET fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style GEN fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style TOOL fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style CONF fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style EXEC fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Prompt Injection & Guardrails': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-guardrails-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  UI["User Input"] --> IG["Input Guard<br/>(injection detection)"]
+  IG -->|"✓ safe"| LLM["LLM"]
+  LLM --> OG["Output Guard<br/>(PII, safety)"]
+  OG -->|"✓ clean"| RESP["Response"]
+  ATK["Attack"] -.->|"✗ blocked"| IG
+  LLM -.->|"✗ blocked"| OG
+  style UI fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style IG fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style OG fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style RESP fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style ATK fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Reliability Math': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    const steps = Array.from({ length: 11 }, (_, i) => i + 1);
+    const reliabilities = [0.90, 0.95, 0.99];
+    const datasets = reliabilities.map((r, idx) => {
+      const colors = [c.red, c.amber, c.green];
+      return {
+        label: `${Math.round(r * 100)}% per step`,
+        data: steps.map(s => +(Math.pow(r, s) * 100).toFixed(1)),
+        borderColor: colors[idx],
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: colors[idx],
+        tension: 0.3
+      };
+    });
+    new Chart(canvas, {
+      type: 'line',
+      data: { labels: steps, datasets },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          title: { display: true, text: 'End-to-End Reliability vs Number of Steps', color: c.text2, font: { family: 'Outfit', size: 14, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Number of Steps', color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          y: { min: 0, max: 100, ticks: { color: c.text2, callback: v => v + '%' }, grid: { color: c.gridLine }, title: { display: true, text: 'End-to-End Reliability', color: c.text2, font: { family: 'Outfit', size: 12 } } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'AI Cost Anatomy': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: ['Cost per Query'],
+        datasets: [
+          { label: 'Embedding (5%)', data: [5], backgroundColor: c.blue + '99', borderColor: c.blue, borderWidth: 1 },
+          { label: 'Retrieval (10%)', data: [10], backgroundColor: c.cyan + '99', borderColor: c.cyan, borderWidth: 1 },
+          { label: 'Reranking (5%)', data: [5], backgroundColor: c.purple + '99', borderColor: c.purple, borderWidth: 1 },
+          { label: 'LLM Prompt Tokens (30%)', data: [30], backgroundColor: c.amber + '99', borderColor: c.amber, borderWidth: 1 },
+          { label: 'LLM Completion Tokens (45%)', data: [45], backgroundColor: c.red + '99', borderColor: c.red, borderWidth: 1 },
+          { label: 'Tools (5%)', data: [5], backgroundColor: c.green + '99', borderColor: c.green, borderWidth: 1 }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        indexAxis: 'y',
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 11 } } },
+          title: { display: true, text: 'AI Cost Breakdown per Query', color: c.text2, font: { family: 'Outfit', size: 14, weight: '600' } }
+        },
+        scales: {
+          x: { stacked: true, ticks: { color: c.text2, callback: v => v + '%' }, grid: { color: c.gridLine }, title: { display: true, text: 'Percentage of Total Cost', color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          y: { stacked: true, ticks: { color: c.text2 }, grid: { display: false } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'The AI Value Chain': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-aivalue-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  HW["Silicon / Hardware<br/>(NVIDIA, AMD, TPU)"] --> CL["Cloud / Compute<br/>(AWS, GCP, Azure)"]
+  CL --> FM["Foundation Models<br/>(OpenAI, Anthropic, Meta)"]
+  FM --> MW["Middleware / Tools<br/>(LangChain, Pinecone, Weights & Biases)"]
+  MW --> APP["Applications<br/>(ChatGPT, Copilot, Custom Apps)"]
+  style HW fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style CL fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style FM fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style MW fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style APP fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Build vs Buy vs Fine-Tune': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-buildbuy-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TD
+  Q["Your Use Case"] --> D1{"Need frontier<br/>capability?"}
+  D1 -->|"Yes"| BUY["Buy API<br/>(OpenAI, Anthropic)"]
+  D1 -->|"No"| D2{"Data<br/>sensitivity?"}
+  D2 -->|"High"| SELF["Self-host<br/>Open Source"]
+  D2 -->|"Low"| D3{"Domain-specific<br/>behavior?"}
+  D3 -->|"Yes"| FT["Fine-tune"]
+  D3 -->|"No"| PE["Prompt<br/>Engineering"]
+  style Q fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style BUY fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style SELF fill:${isDark() ? '#2c2622' : '#fefce8'},stroke:${c.amber}
+  style FT fill:${isDark() ? '#2c2622' : '#faf5ff'},stroke:${c.purple}
+  style PE fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     PROJECT 2: CNN Image Classifier
+     ═══════════════════════════════════════════════════ */
+
+  case 'Kernels & Weight Sharing': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'roughjs-container';
+    wrapper.style.cssText = 'width:100%;overflow-x:auto;padding:8px 0';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const w = 480, h = 220;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', '100%');
+    svg.style.maxWidth = w + 'px';
+    wrapper.appendChild(svg);
+    container.appendChild(wrapper);
+    const rc = rough.svg(svg);
+    const cs = 28, gap = 2;
+
+    function addText(x, y, text, color, size, anchor, weight) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('text-anchor', anchor || 'middle');
+      t.setAttribute('font-size', size || '11');
+      t.setAttribute('font-family', 'Outfit, sans-serif');
+      if (weight) t.setAttribute('font-weight', weight);
+      t.setAttribute('fill', color || c.text);
+      t.textContent = text;
+      svg.appendChild(t);
+    }
+
+    // 5x5 input grid
+    const input = [[1,0,1,0,1],[0,1,0,1,0],[1,1,1,0,0],[0,0,1,1,1],[1,0,0,1,0]];
+    const kRow = 1, kCol = 1; // kernel position
+    const ox = 20, oy = 40;
+    for (let r = 0; r < 5; r++) {
+      for (let cl = 0; cl < 5; cl++) {
+        const x = ox + cl * (cs + gap), y = oy + r * (cs + gap);
+        const isKernel = r >= kRow && r < kRow + 3 && cl >= kCol && cl < kCol + 3;
+        const fill = isKernel ? c.phase1Fill : c.fill;
+        const stroke = isKernel ? c.green : c.stroke;
+        svg.appendChild(rc.rectangle(x, y, cs, cs, { stroke, fill, fillStyle: 'solid', roughness: 0.8, strokeWidth: isKernel ? 2 : 1 }));
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', x + cs/2); txt.setAttribute('y', y + cs/2 + 4);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '10'); txt.setAttribute('font-family', 'JetBrains Mono, monospace');
+        txt.setAttribute('fill', c.text);
+        txt.textContent = input[r][cl];
+        svg.appendChild(txt);
+      }
+    }
+    addText(ox + 2.5 * (cs + gap) - gap/2, 30, 'Input (5x5)', c.text2, '12', 'middle', '600');
+
+    // 3x3 kernel
+    const kernel = [[1,0,-1],[1,0,-1],[1,0,-1]];
+    const kox = 200, koy = 60;
+    for (let r = 0; r < 3; r++) {
+      for (let cl = 0; cl < 3; cl++) {
+        const x = kox + cl * (cs + gap), y = koy + r * (cs + gap);
+        svg.appendChild(rc.rectangle(x, y, cs, cs, { stroke: c.accent, fill: 'rgba(249,115,22,0.12)', fillStyle: 'solid', roughness: 0.8, strokeWidth: 1.5 }));
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', x + cs/2); txt.setAttribute('y', y + cs/2 + 4);
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('font-size', '10'); txt.setAttribute('font-family', 'JetBrains Mono, monospace');
+        txt.setAttribute('fill', c.text);
+        txt.textContent = kernel[r][cl];
+        svg.appendChild(txt);
+      }
+    }
+    addText(kox + 1.5 * (cs + gap) - gap/2, 50, 'Kernel (3x3)', c.accent, '12', 'middle', '600');
+
+    // arrow
+    svg.appendChild(rc.line(305, 110, 340, 110, { stroke: c.stroke, strokeWidth: 1.5, roughness: 0.5 }));
+    addText(322, 100, '\u2192', c.text2, '16');
+
+    // output cell
+    const outX = 355, outY = 70;
+    let dotProd = 0;
+    for (let r = 0; r < 3; r++) for (let cl = 0; cl < 3; cl++) dotProd += input[kRow+r][kCol+cl] * kernel[r][cl];
+    const outVals = [['','',''],['',dotProd,''],['','','']];
+    for (let r = 0; r < 3; r++) {
+      for (let cl = 0; cl < 3; cl++) {
+        const x = outX + cl * (cs + gap), y = outY + r * (cs + gap);
+        const isCenter = r === 1 && cl === 1;
+        svg.appendChild(rc.rectangle(x, y, cs, cs, {
+          stroke: isCenter ? c.blue : c.stroke,
+          fill: isCenter ? 'rgba(37,99,235,0.12)' : c.fill,
+          fillStyle: 'solid', roughness: 0.8, strokeWidth: isCenter ? 2 : 1
+        }));
+        if (outVals[r][cl] !== '') {
+          const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          txt.setAttribute('x', x + cs/2); txt.setAttribute('y', y + cs/2 + 4);
+          txt.setAttribute('text-anchor', 'middle');
+          txt.setAttribute('font-size', '10'); txt.setAttribute('font-family', 'JetBrains Mono, monospace');
+          txt.setAttribute('fill', c.text);
+          txt.textContent = outVals[r][cl];
+          svg.appendChild(txt);
+        }
+      }
+    }
+    addText(outX + 1.5 * (cs + gap) - gap/2, 60, 'Output (3x3)', c.blue, '12', 'middle', '600');
+    addText(w/2, h - 8, 'Same kernel slides across entire input \u2014 weights are shared', c.text2, '11');
+    break;
+  }
+
+  case 'ResNet & Skip Connections': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-resnet-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  x["x (input)"] --> Conv1["Conv 3x3"]
+  Conv1 --> BN1["BatchNorm"]
+  BN1 --> ReLU1["ReLU"]
+  ReLU1 --> Conv2["Conv 3x3"]
+  Conv2 --> BN2["BatchNorm"]
+  BN2 --> Add["+ Add"]
+  x -->|"skip connection"| Add
+  Add --> ReLU2["ReLU"]
+  ReLU2 --> Out["F(x) + x"]
+  style x fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style Conv1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style BN1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style ReLU1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style Conv2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style BN2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style Add fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.accent}
+  style ReLU2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style Out fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Autograd': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-autograd-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  x["x"] --> mul["a = x*W"]
+  W["W"] --> mul
+  mul --> add["b = a + bias"]
+  bias["bias"] --> add
+  add --> relu["c = ReLU(b)"]
+  relu --> loss["L = loss(c, y)"]
+  y["y (target)"] --> loss
+  loss -.->|"dL/dc"| relu
+  relu -.->|"dL/db"| add
+  add -.->|"dL/da"| mul
+  mul -.->|"dL/dW"| W
+  style x fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style W fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style bias fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style y fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style mul fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style add fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style relu fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style loss fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Supervised Learning Overview': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    const class0 = [], class1 = [];
+    const rng = (seed) => { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; };
+    const r = rng(42);
+    for (let i = 0; i < 30; i++) {
+      class0.push({ x: r() * 3 + 0.5, y: r() * 3 + 0.5 });
+      class1.push({ x: r() * 3 + 3, y: r() * 3 + 3 });
+    }
+    const boundary = [{ x: 0, y: 5 }, { x: 5, y: 0 }];
+    new Chart(canvas, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'Class A', data: class0, pointRadius: 5, pointStyle: 'circle', borderColor: c.blue, backgroundColor: c.blue + '88' },
+          { label: 'Class B', data: class1, pointRadius: 5, pointStyle: 'triangle', borderColor: c.accent, backgroundColor: c.accent + '88' },
+          { label: 'Decision boundary', data: boundary, showLine: true, pointRadius: 0, borderColor: c.red, borderWidth: 2, borderDash: [6, 3], backgroundColor: 'transparent' }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          title: { display: true, text: 'Classification: Learn a boundary from labeled data', color: c.text2, font: { family: 'Outfit', size: 14, weight: '600' } }
+        },
+        scales: {
+          x: { min: 0, max: 7, ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Feature 1', color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          y: { min: 0, max: 7, ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Feature 2', color: c.text2, font: { family: 'Outfit', size: 12 } } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'Model Evaluation Fundamentals': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    wrapper.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center';
+    const canvasA = document.createElement('canvas');
+    canvasA.style.cssText = 'max-width:280px;flex:1 1 240px';
+    wrapper.appendChild(canvasA);
+    const canvasB = document.createElement('canvas');
+    canvasB.style.cssText = 'max-width:280px;flex:1 1 240px';
+    wrapper.appendChild(canvasB);
+    container.appendChild(wrapper);
+    const epochs = Array.from({ length: 50 }, (_, i) => i + 1);
+    const trainLoss = epochs.map(e => 2.5 * Math.exp(-0.08 * e) + 0.05);
+    const valLoss = epochs.map(e => 2.5 * Math.exp(-0.06 * e) + 0.15 + (e > 25 ? 0.015 * (e - 25) : 0));
+    new Chart(canvasA, {
+      type: 'line',
+      data: {
+        labels: epochs,
+        datasets: [
+          { label: 'Train loss', data: trainLoss, borderColor: c.blue, borderWidth: 2, pointRadius: 0, backgroundColor: 'transparent' },
+          { label: 'Val loss', data: valLoss, borderColor: c.red, borderWidth: 2, pointRadius: 0, borderDash: [5, 3], backgroundColor: 'transparent' }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 11 } } },
+          title: { display: true, text: 'Overfitting: val diverges from train', color: c.text2, font: { family: 'Outfit', size: 12, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2, maxTicksLimit: 6 }, grid: { color: c.gridLine }, title: { display: true, text: 'Epoch', color: c.text2, font: { family: 'Outfit', size: 11 } } },
+          y: { ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Loss', color: c.text2, font: { family: 'Outfit', size: 11 } } }
+        }
+      }
+    });
+    const thresholds = Array.from({ length: 20 }, (_, i) => +(i * 0.05 + 0.05).toFixed(2));
+    const precision = thresholds.map(t => 0.3 + 0.65 * t);
+    const recall = thresholds.map(t => 1.0 - 0.7 * t);
+    new Chart(canvasB, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'PR curve', data: recall.map((r, i) => ({ x: r, y: precision[i] })), showLine: true, pointRadius: 0, borderColor: c.green, borderWidth: 2, backgroundColor: 'transparent' }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Precision-Recall tradeoff', color: c.text2, font: { family: 'Outfit', size: 12, weight: '600' } }
+        },
+        scales: {
+          x: { min: 0, max: 1.05, ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Recall', color: c.text2, font: { family: 'Outfit', size: 11 } } },
+          y: { min: 0, max: 1.05, ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Precision', color: c.text2, font: { family: 'Outfit', size: 11 } } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'Ensemble Methods & Gradient Boosting': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-ensemble-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph Bagging["Bagging (Random Forest)"]
+    D1["Data"] --> T1["Tree 1"]
+    D1 --> T2["Tree 2"]
+    D1 --> T3["Tree 3"]
+    T1 --> Avg["Average / Vote"]
+    T2 --> Avg
+    T3 --> Avg
+  end
+  subgraph Boosting["Boosting (XGBoost)"]
+    Db["Data"] --> B1["Tree 1"]
+    B1 -->|"errors"| B2["Tree 2"]
+    B2 -->|"errors"| B3["Tree 3"]
+    B3 --> Sum["Weighted Sum"]
+  end
+  style D1 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style Db fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style T1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style T2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style T3 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style B1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style B2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style B3 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style Avg fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+  style Sum fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     PROJECT 3: Transformer from Scratch
+     ═══════════════════════════════════════════════════ */
+
+  case 'Scaled Dot-Product Attention': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-sdpa-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  Q["Q"] --> MM1["MatMul Q,KT"]
+  K["KT"] --> MM1
+  MM1 --> Scale["Scale / sqrt dk"]
+  Scale --> Mask["Mask opt"]
+  Mask --> SM["Softmax"]
+  SM --> MM2["MatMul with V"]
+  V["V"] --> MM2
+  MM2 --> Out["Output"]
+  style Q fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style K fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style V fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style MM1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style Scale fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+  style Mask fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+  style SM fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style MM2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style Out fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Multi-Head Attention': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'roughjs-container';
+    wrapper.style.cssText = 'width:100%;overflow-x:auto;padding:8px 0';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const w = 460, h = 240;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', '100%');
+    svg.style.maxWidth = w + 'px';
+    wrapper.appendChild(svg);
+    container.appendChild(wrapper);
+    const rc = rough.svg(svg);
+
+    function addText(x, y, text, color, size, anchor, weight) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('text-anchor', anchor || 'middle');
+      t.setAttribute('font-size', size || '11');
+      t.setAttribute('font-family', 'Outfit, sans-serif');
+      if (weight) t.setAttribute('font-weight', weight);
+      t.setAttribute('fill', color || c.text);
+      t.textContent = text;
+      svg.appendChild(t);
+    }
+
+    // Input bar
+    svg.appendChild(rc.rectangle(20, 90, 60, 60, { stroke: c.blue, fill: c.fill, fillStyle: 'solid', roughness: 0.8, strokeWidth: 1.5 }));
+    addText(50, 125, 'Input', c.blue, '11', 'middle', '600');
+    addText(50, 80, 'd_model', c.text2, '10');
+
+    // 4 parallel heads
+    const headColors = [c.green, c.purple, c.accent, c.cyan];
+    const headLabels = ['Head 1', 'Head 2', 'Head 3', 'Head 4'];
+    for (let i = 0; i < 4; i++) {
+      const hx = 130, hy = 20 + i * 55;
+      svg.appendChild(rc.rectangle(hx, hy, 100, 42, { stroke: headColors[i], fill: isDark() ? 'rgba(50,40,35,0.5)' : 'rgba(255,255,255,0.8)', fillStyle: 'solid', roughness: 0.8, strokeWidth: 1.5 }));
+      addText(hx + 50, hy + 18, headLabels[i], headColors[i], '10', 'middle', '600');
+      addText(hx + 50, hy + 32, 'Q*KT/sqrt(d) -> *V', c.text2, '9');
+      svg.appendChild(rc.line(80, 120, hx, hy + 21, { stroke: c.stroke, strokeWidth: 0.8, roughness: 0.5 }));
+      svg.appendChild(rc.line(hx + 100, hy + 21, 280, 120, { stroke: c.stroke, strokeWidth: 0.8, roughness: 0.5 }));
+    }
+
+    // Concat box
+    svg.appendChild(rc.rectangle(280, 85, 70, 70, { stroke: c.amber, fill: isDark() ? 'rgba(50,40,35,0.5)' : 'rgba(255,255,255,0.8)', fillStyle: 'solid', roughness: 0.8, strokeWidth: 1.5 }));
+    addText(315, 115, 'Concat', c.amber, '11', 'middle', '600');
+    addText(315, 130, '4 x d_k', c.text2, '9');
+
+    // Linear projection
+    svg.appendChild(rc.line(350, 120, 370, 120, { stroke: c.stroke, strokeWidth: 1.2, roughness: 0.5 }));
+    svg.appendChild(rc.rectangle(370, 95, 70, 50, { stroke: c.red, fill: isDark() ? 'rgba(50,40,35,0.5)' : 'rgba(255,255,255,0.8)', fillStyle: 'solid', roughness: 0.8, strokeWidth: 1.5 }));
+    addText(405, 117, 'Linear', c.red, '11', 'middle', '600');
+    addText(405, 130, 'W_O', c.text2, '9');
+
+    addText(w/2, h - 5, 'Each head attends to different representation subspace', c.text2, '11');
+    break;
+  }
+
+  case 'Residual Stream': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-residual-stream-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  Input["Input"] --> Add1["+ Add"]
+  Add1 --> LN1["LayerNorm"]
+  LN1 --> Attn["Multi-Head Attention"]
+  Attn --> Add2["+ Add"]
+  Add2 --> LN2["LayerNorm"]
+  LN2 --> FFN["Feed-Forward Network"]
+  FFN --> Add3["+ Add"]
+  Add3 --> Out["Output"]
+  Input -->|"skip"| Add1
+  Add1 -->|"skip"| Add2
+  Add2 -->|"skip"| Add3
+  style Input fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style Add1 fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.accent}
+  style Add2 fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.accent}
+  style Add3 fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.accent}
+  style LN1 fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+  style LN2 fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+  style Attn fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style FFN fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style Out fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'FFN Layers': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    const dModel = 768, dFF = 3072;
+    const attnParams = 4 * dModel * dModel;
+    const ffnParams = 2 * dModel * dFF;
+    const total = attnParams + ffnParams;
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: ['Attention (Q,K,V,O)', 'FFN (Up + Down)'],
+        datasets: [{
+          label: 'Parameters',
+          data: [attnParams, ffnParams],
+          backgroundColor: [c.blue + '99', c.purple + '99'],
+          borderColor: [c.blue, c.purple],
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        ...chartDefaults(),
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'FFN has ' + Math.round(100 * ffnParams / total) + '% of layer params (GPT-2 small, d=768)', color: c.text2, font: { family: 'Outfit', size: 13, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2, callback: function(v) { return (v / 1e6).toFixed(1) + 'M'; } }, grid: { color: c.gridLine }, title: { display: true, text: 'Parameter count', color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          y: { ticks: { color: c.text2, font: { family: 'Outfit', size: 12 } }, grid: { display: false } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'Encoder vs Decoder': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-enc-dec-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph Encoder["Encoder (Bidirectional)"]
+    direction LR
+    E1["The"] <--> E2["cat"]
+    E2 <--> E3["sat"]
+    E1 <--> E3
+  end
+  subgraph Decoder["Decoder (Causal Mask)"]
+    direction LR
+    D1["The"] --> D2["cat"]
+    D1 --> D3["sat"]
+    D2 --> D3
+  end
+  style E1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style E2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style E3 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style D1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style D2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style D3 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'RoPE': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    const positions = Array.from({ length: 64 }, (_, i) => i);
+    const freqs = [1, 2, 4, 8, 16];
+    const ropeColors = [c.blue, c.green, c.purple, c.accent, c.red];
+    const datasets = freqs.map((freq, fi) => ({
+      label: 'dim ' + (fi * 2) + ': freq=' + freq,
+      data: positions.map(p => ({ x: p, y: Math.sin(p / Math.pow(10000, 2 * fi / 64)) })),
+      showLine: true, pointRadius: 0, borderColor: ropeColors[fi], borderWidth: 1.8, backgroundColor: 'transparent'
+    }));
+    new Chart(canvas, {
+      type: 'scatter',
+      data: { datasets: datasets },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 11 } } },
+          title: { display: true, text: 'RoPE: Different dims encode position at different frequencies', color: c.text2, font: { family: 'Outfit', size: 13, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Token position', color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          y: { min: -1.2, max: 1.2, ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'sin(pos / theta)', color: c.text2, font: { family: 'Outfit', size: 12 } } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'Scaling Laws': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    const computeLog = [];
+    const lossVals = [];
+    for (let logC = 17; logC <= 24; logC += 0.2) {
+      computeLog.push(logC);
+      lossVals.push(5.5 * Math.pow(10, -0.07 * (logC - 17)) + 0.8);
+    }
+    new Chart(canvas, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'Loss vs Compute (power law)', data: computeLog.map(function(lc, i) { return { x: lc, y: lossVals[i] }; }), showLine: true, pointRadius: 0, borderColor: c.blue, borderWidth: 2, backgroundColor: 'transparent' },
+          { label: 'Chinchilla-optimal', data: [{ x: 22.5, y: 5.5 * Math.pow(10, -0.07 * (22.5 - 17)) + 0.8 }], pointRadius: 8, pointStyle: 'star', borderColor: c.green, backgroundColor: c.green },
+          { label: 'GPT-3 (over-parameterized)', data: [{ x: 23.5, y: 5.5 * Math.pow(10, -0.07 * (23.5 - 17)) + 0.8 + 0.15 }], pointRadius: 8, pointStyle: 'triangle', borderColor: c.red, backgroundColor: c.red }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 11 } } },
+          title: { display: true, text: 'Scaling Laws: Loss decreases as power law of compute', color: c.text2, font: { family: 'Outfit', size: 13, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2, callback: function(v) { return '10^' + v; } }, grid: { color: c.gridLine }, title: { display: true, text: 'Compute (log10 FLOPs)', color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          y: { ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Loss', color: c.text2, font: { family: 'Outfit', size: 12 } } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'FlashAttention & Efficient Attention': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-flashattn-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  subgraph Standard["Standard Attention"]
+    S1["Q, K, V in HBM"] --> S2["Compute full NxN<br/>attention matrix"]
+    S2 --> S3["Store NxN in HBM"]
+    S3 --> S4["Multiply by V"]
+  end
+  subgraph Flash["FlashAttention"]
+    F1["Q, K, V in HBM"] --> F2["Load Q,K,V tiles<br/>into SRAM"]
+    F2 --> F3["Compute tile of<br/>attention in SRAM"]
+    F3 --> F4["Write output tile<br/>back to HBM"]
+    F4 -->|"next tile"| F2
+  end
+  style S1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style S2 fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style S3 fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+  style S4 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style F1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style F2 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style F3 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style F4 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     PROJECT 4: Tokenizer from Scratch
+     ═══════════════════════════════════════════════════ */
+
+  case 'BPE': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-bpe-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph TB
+  S0["l | o | w | e | r"] -->|"merge l+o"| S1["lo | w | e | r"]
+  S1 -->|"merge lo+w"| S2["low | e | r"]
+  S2 -->|"merge e+r"| S3["low | er"]
+  S3 -->|"merge low+er"| S4["lower"]
+  style S0 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style S1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style S2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style S3 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style S4 fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     PROJECT 5: Pre-train a Small LM
+     ═══════════════════════════════════════════════════ */
+
+  case 'Next Token Prediction': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-ntp-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  T1["The"] --> Model["Transformer<br/>Model"]
+  T2["cat"] --> Model
+  T3["sat"] --> Model
+  T4["on"] --> Model
+  T5["the"] --> Model
+  Model --> P["P(next token)"]
+  P --> mat["mat: 0.35<br/>rug: 0.15<br/>bed: 0.12<br/>floor: 0.10<br/>..."]
+  style T1 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style T2 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style T3 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style T4 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style T5 fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style Model fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style P fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+  style mat fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  case 'Roofline Model': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    const peakCompute = 312;
+    const ridgePoint = 156;
+    const roofline = [];
+    for (let logAI = 0; logAI <= 9; logAI += 0.2) {
+      const ai = Math.pow(2, logAI);
+      roofline.push({ x: logAI, y: Math.min(2.0 * ai, peakCompute) });
+    }
+    new Chart(canvas, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: 'Roofline', data: roofline, showLine: true, pointRadius: 0, borderColor: c.blue, borderWidth: 2.5, backgroundColor: 'transparent' },
+          { label: 'MatMul (compute-bound)', data: [{ x: Math.log2(256), y: 290 }], pointRadius: 8, pointStyle: 'circle', borderColor: c.green, backgroundColor: c.green },
+          { label: 'Attention (memory-bound)', data: [{ x: Math.log2(8), y: 16 }], pointRadius: 8, pointStyle: 'triangle', borderColor: c.red, backgroundColor: c.red },
+          { label: 'Ridge point', data: [{ x: Math.log2(ridgePoint), y: peakCompute }], pointRadius: 10, pointStyle: 'star', borderColor: c.amber, backgroundColor: c.amber }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { labels: { color: c.text2, font: { family: 'Outfit', size: 11 } } },
+          title: { display: true, text: 'Roofline Model (A100 GPU)', color: c.text2, font: { family: 'Outfit', size: 13, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2, callback: function(v) { return '2^' + v; } }, grid: { color: c.gridLine }, title: { display: true, text: 'Arithmetic Intensity (FLOPs/byte, log2)', color: c.text2, font: { family: 'Outfit', size: 12 } } },
+          y: { type: 'logarithmic', min: 1, max: 500, ticks: { color: c.text2 }, grid: { color: c.gridLine }, title: { display: true, text: 'Performance (TFLOPS)', color: c.text2, font: { family: 'Outfit', size: 12 } } }
+        }
+      }
+    });
+    break;
+  }
+
+  case 'MLOps Fundamentals': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mermaid-container';
+    const mermaidId = 'mermaid-mlops-' + Date.now();
+    wrapper.innerHTML = `<div class="mermaid" id="${mermaidId}">
+graph LR
+  Data["Data"] --> Pre["Preprocess"]
+  Pre --> Train["Train"]
+  Train --> Eval["Evaluate"]
+  Eval --> Reg["Register Model"]
+  Reg --> Deploy["Deploy"]
+  Deploy --> Monitor["Monitor"]
+  Monitor -->|"feedback loop"| Data
+  style Data fill:${isDark() ? '#2c2622' : '#f0fdf4'},stroke:${c.green}
+  style Pre fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style Train fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.blue}
+  style Eval fill:${isDark() ? '#2c2622' : '#fffbeb'},stroke:${c.amber}
+  style Reg fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style Deploy fill:${isDark() ? '#2c2622' : '#eff6ff'},stroke:${c.purple}
+  style Monitor fill:${isDark() ? '#2c2622' : '#fef2f2'},stroke:${c.red}
+</div>`;
+    container.appendChild(wrapper);
+    mermaid.run({ nodes: [document.getElementById(mermaidId)] });
+    break;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     PROJECT 6: Fine-tune an LLM
+     ═══════════════════════════════════════════════════ */
+
+  case 'LoRA': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'roughjs-container';
+    wrapper.style.cssText = 'width:100%;overflow-x:auto;padding:8px 0';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const w = 420, h = 240;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', '100%');
+    svg.style.maxWidth = w + 'px';
+    wrapper.appendChild(svg);
+    container.appendChild(wrapper);
+    const rc = rough.svg(svg);
+
+    function addText(x, y, text, color, size, anchor, weight) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('text-anchor', anchor || 'middle');
+      t.setAttribute('font-size', size || '11');
+      t.setAttribute('font-family', 'Outfit, sans-serif');
+      if (weight) t.setAttribute('font-weight', weight);
+      t.setAttribute('fill', color || c.text);
+      t.textContent = text;
+      svg.appendChild(t);
+    }
+
+    // Large W matrix (frozen)
+    svg.appendChild(rc.rectangle(40, 30, 120, 160, { stroke: c.blue, fill: c.fill, fillStyle: 'solid', roughness: 0.8, strokeWidth: 2 }));
+    addText(100, 115, 'W', c.blue, '24', 'middle', '700');
+    addText(100, 135, 'd x d', c.text2, '11');
+    addText(100, 205, 'Frozen', c.blue, '11', 'middle', '600');
+    svg.appendChild(rc.line(45, 35, 155, 185, { stroke: c.red, strokeWidth: 1, roughness: 0.5 }));
+
+    // Plus sign
+    addText(190, 115, '+', c.text2, '24', 'middle', '700');
+
+    // B matrix (tall, thin)
+    svg.appendChild(rc.rectangle(220, 50, 30, 120, { stroke: c.green, fill: 'rgba(5,150,105,0.12)', fillStyle: 'solid', roughness: 0.8, strokeWidth: 2 }));
+    addText(235, 115, 'B', c.green, '14', 'middle', '700');
+    addText(235, 185, 'd x r', c.text2, '10');
+
+    // multiply sign
+    addText(267, 115, 'x', c.text2, '16');
+
+    // A matrix (short, wide)
+    svg.appendChild(rc.rectangle(282, 85, 90, 30, { stroke: c.accent, fill: 'rgba(249,115,22,0.12)', fillStyle: 'solid', roughness: 0.8, strokeWidth: 2 }));
+    addText(327, 105, 'A', c.accent, '14', 'middle', '700');
+    addText(327, 130, 'r x d', c.text2, '10');
+
+    // r label
+    addText(275, 50, 'r = 4-64', c.purple, '11', 'middle', '600');
+    addText(275, 65, '(rank)', c.text2, '10');
+
+    // bypass arrow
+    svg.appendChild(rc.line(220, 40, 372, 40, { stroke: c.green, strokeWidth: 1.2, roughness: 0.5 }));
+    svg.appendChild(rc.line(372, 40, 372, 85, { stroke: c.green, strokeWidth: 1.2, roughness: 0.5 }));
+    addText(296, 35, 'low-rank bypass', c.green, '10', 'middle');
+
+    addText(w/2, h - 5, 'Only B and A are trained \u2014 0.1% of total params', c.text2, '11');
+    break;
+  }
+
+  case 'Quantization': {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chartjs-container';
+    const canvas = document.createElement('canvas');
+    wrapper.appendChild(canvas);
+    container.appendChild(wrapper);
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: ['FP32', 'FP16', 'INT8', 'INT4'],
+        datasets: [
+          {
+            label: 'Model Size (GB)',
+            data: [28, 14, 7, 3.5],
+            backgroundColor: [c.red + '88', c.amber + '88', c.blue + '88', c.green + '88'],
+            borderColor: [c.red, c.amber, c.blue, c.green],
+            borderWidth: 1.5
+          }
+        ]
+      },
+      options: {
+        ...chartDefaults(),
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Quantization: 7B model size at different precisions', color: c.text2, font: { family: 'Outfit', size: 13, weight: '600' } }
+        },
+        scales: {
+          x: { ticks: { color: c.text2, font: { family: 'Outfit', size: 12, weight: '600' } }, grid: { display: false } },
+          y: { ticks: { color: c.text2, callback: function(v) { return v + ' GB'; } }, grid: { color: c.gridLine }, title: { display: true, text: 'Size', color: c.text2, font: { family: 'Outfit', size: 12 } } }
+        }
+      }
+    });
     break;
   }
 
