@@ -2,6 +2,9 @@
  * Weekly AI Scan — sends a WhatsApp digest of AI developments relevant to
  * the learning journey. Optionally creates GitHub Issues for high-relevance items.
  *
+ * Uses Claude Code CLI (`claude -p`) for generation, giving Claude full tool access
+ * including WebSearch for real-time AI news.
+ *
  * Runs via GitHub Actions cron every Sunday at 8:30 AM IST.
  *
  * Required env vars:
@@ -36,6 +39,50 @@ function validateEnv() {
     console.error(`Missing required environment variables: ${missing.join(", ")}`);
     process.exit(1);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Claude CLI helper
+// ---------------------------------------------------------------------------
+
+function askClaude(prompt, maxTokens = 4096) {
+  const escaped = prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n');
+  const result = execSync(
+    `claude -p "${escaped}" --output-format text --max-turns 10`,
+    {
+      encoding: "utf-8",
+      timeout: 120000, // 2 min timeout
+      env: { ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY },
+    }
+  );
+  return result.trim();
+}
+
+// ---------------------------------------------------------------------------
+// Content validation
+// ---------------------------------------------------------------------------
+
+function validateMessage(message) {
+  // Must have actual content (not error messages)
+  if (
+    message.includes("beyond my knowledge") ||
+    message.includes("I cannot") ||
+    message.includes("I don't have access")
+  ) {
+    console.log("VALIDATION FAILED: Claude returned an error/disclaimer instead of content");
+    return false;
+  }
+  // Must be reasonable length (not too short)
+  if (message.length < 50) {
+    console.log("VALIDATION FAILED: Message too short");
+    return false;
+  }
+  // WhatsApp has a ~1600 char limit per message
+  if (message.length > 1600) {
+    console.log("WARNING: Message exceeds WhatsApp limit, will be truncated");
+    // Don't fail, just warn — truncation happens at send time
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,16 +142,13 @@ function loadProgress() {
 }
 
 // ---------------------------------------------------------------------------
-// Claude API — AI news scan
+// Claude CLI — AI news scan (with WebSearch)
 // ---------------------------------------------------------------------------
 
-async function scanAINews(projects, conceptNames) {
-  const Anthropic = require("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
+function scanAINews(projects, conceptNames) {
   const projectSummaries = projects
     .map((p) => `  Project ${p.number}: ${p.title} (${p.phase}) — ${p.status}`)
-    .join("\n");
+    .join("\\n");
 
   const conceptList = conceptNames.slice(0, 50).join(", "); // limit to avoid token overflow
 
@@ -112,26 +156,23 @@ async function scanAINews(projects, conceptNames) {
   weekStart.setDate(weekStart.getDate() - 7);
   const weekRange = `${weekStart.toISOString().slice(0, 10)} to ${new Date().toISOString().slice(0, 10)}`;
 
-  const prompt = `You are an AI research analyst tracking developments for a learner building an "AI from semiconductors to agentic architectures" curriculum.
+  const prompt = `Search the web for the most important AI developments from this past week (${weekRange}). Look at: arXiv AI papers, Hugging Face trending, major AI company announcements, new model releases.
+
+For each development, evaluate its relevance to an AI learning curriculum that covers these topics: ${conceptList}
 
 The learner's projects:
 ${projectSummaries}
 
-Key concepts already covered: ${conceptList}
-
-Date range for this scan: ${weekRange}
-
-Task: Identify the top 3 most significant AI/ML developments from the past week that are relevant to this learning journey. For each development:
-
+For each of the top 3 developments:
 1. What happened (1-2 sentences)
 2. Which project(s) it relates to
-3. A relevance score (1-10) based on these criteria:
+3. A relevance score (1-10) based on:
    - Does it change how a concept should be taught? (high impact)
    - Is it a new tool/framework the learner should know about? (medium)
    - Is it just interesting news with no curriculum impact? (low)
 4. A recommended action (add to resources, update build guide, note for future, or no action)
 
-Return ONLY valid JSON (no markdown fences):
+Return ONLY valid JSON (no markdown fences, no extra text):
 {
   "weekRange": "${weekRange}",
   "developments": [
@@ -141,27 +182,46 @@ Return ONLY valid JSON (no markdown fences):
       "relatedProjects": ["Project N: Title"],
       "relevanceScore": 8,
       "action": "...",
-      "category": "tool_release" | "paper" | "model_release" | "framework_update" | "industry_news"
+      "category": "tool_release | paper | model_release | framework_update | industry_news"
     }
   ],
   "overallAssessment": "One sentence on whether the curriculum needs any changes this week."
 }`;
 
-  const response = await client.messages.create({
-    model: "claude-opus-4-6",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const text = response.content[0].text.trim();
-  const jsonStr = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+  const raw = askClaude(prompt);
+  const jsonStr = raw.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
 
   try {
     return JSON.parse(jsonStr);
   } catch (err) {
-    console.error("Failed to parse AI scan JSON:", text);
+    console.error("Failed to parse AI scan JSON:", raw);
     throw new Error(`AI scan returned invalid JSON: ${err.message}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Scan result validation
+// ---------------------------------------------------------------------------
+
+function validateScanResult(scanResult) {
+  if (!scanResult || !scanResult.developments || !Array.isArray(scanResult.developments)) {
+    console.log("VALIDATION FAILED: No developments array in scan result");
+    return false;
+  }
+
+  if (scanResult.developments.length === 0) {
+    console.log("VALIDATION FAILED: Empty developments array");
+    return false;
+  }
+
+  // Check if all scores are 0 (no real data)
+  const allZero = scanResult.developments.every((d) => d.relevanceScore === 0);
+  if (allZero) {
+    console.log("VALIDATION FAILED: All developments scored 0 — likely no real data");
+    return false;
+  }
+
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -306,12 +366,16 @@ async function sendWhatsApp(body) {
     ? process.env.MY_WHATSAPP_NUMBER
     : `whatsapp:${process.env.MY_WHATSAPP_NUMBER}`;
 
-  console.log(`Sending WhatsApp message (${body.length} chars)...`);
+  // Truncate if over WhatsApp limit
+  const truncated = body.length > 1600 ? body.slice(0, 1597) + "..." : body;
+
+  const estCost = "$0.005";
+  console.log(`Sending WhatsApp message (${truncated.length} chars, est. cost: ${estCost})...`);
 
   const message = await client.messages.create({
     from: fromNumber,
     to: toNumber,
-    body,
+    body: truncated,
   });
 
   console.log(`Message sent. SID: ${message.sid}, Status: ${message.status}`);
@@ -334,17 +398,29 @@ async function main() {
   const progress = loadProgress();
   console.log(`Loaded ${projects.length} projects, ${conceptNames.length} concepts.`);
 
-  // Scan for AI developments
-  console.log("Scanning for AI developments via Claude Haiku...");
-  const scanResult = await scanAINews(projects, conceptNames);
+  // Scan for AI developments via Claude Code CLI (with WebSearch)
+  console.log("Scanning for AI developments via Claude Code CLI (with WebSearch)...");
+  const scanResult = scanAINews(projects, conceptNames);
   console.log(`Found ${scanResult.developments.length} developments.`);
 
   for (const dev of scanResult.developments) {
     console.log(`  [${dev.relevanceScore}/10] ${dev.title}`);
   }
 
+  // Validate scan results before sending
+  if (!validateScanResult(scanResult)) {
+    console.log("Scan result validation failed — not sending. Saving Twilio credits.");
+    return;
+  }
+
   // Format and send WhatsApp digest
   const message = formatWeeklyMessage(scanResult, progress, conceptNames.length);
+
+  // Validate final message content
+  if (!validateMessage(message)) {
+    console.log("Message validation failed — not sending. Saving Twilio credits.");
+    return;
+  }
 
   console.log("\n--- Message Preview ---");
   console.log(message);

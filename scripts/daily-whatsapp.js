@@ -5,6 +5,9 @@
  * On Sundays the weekly-ai-scan.js handles everything, so this script skips Sunday
  * unless you want both (set SEND_ON_SUNDAY=1 to override).
  *
+ * Uses Claude Code CLI (`claude -p`) for generation, giving Claude full tool access
+ * including WebSearch.
+ *
  * Required env vars:
  *   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM,
  *   MY_WHATSAPP_NUMBER, ANTHROPIC_API_KEY
@@ -12,6 +15,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 
 // ---------------------------------------------------------------------------
 // Config & validation
@@ -32,6 +36,50 @@ function validateEnv() {
     console.error("Add them as GitHub Actions secrets or export locally.");
     process.exit(1);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Claude CLI helper
+// ---------------------------------------------------------------------------
+
+function askClaude(prompt, maxTokens = 4096) {
+  const escaped = prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n');
+  const result = execSync(
+    `claude -p "${escaped}" --output-format text --max-turns 10`,
+    {
+      encoding: "utf-8",
+      timeout: 120000, // 2 min timeout
+      env: { ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY },
+    }
+  );
+  return result.trim();
+}
+
+// ---------------------------------------------------------------------------
+// Content validation
+// ---------------------------------------------------------------------------
+
+function validateMessage(message) {
+  // Must have actual content (not error messages)
+  if (
+    message.includes("beyond my knowledge") ||
+    message.includes("I cannot") ||
+    message.includes("I don't have access")
+  ) {
+    console.log("VALIDATION FAILED: Claude returned an error/disclaimer instead of content");
+    return false;
+  }
+  // Must be reasonable length (not too short)
+  if (message.length < 50) {
+    console.log("VALIDATION FAILED: Message too short");
+    return false;
+  }
+  // WhatsApp has a ~1600 char limit per message
+  if (message.length > 1600) {
+    console.log("WARNING: Message exceeds WhatsApp limit, will be truncated");
+    // Don't fail, just warn — truncation happens at send time
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,92 +150,42 @@ function today() {
   });
 }
 
-function stripHtml(html) {
-  return html
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<code>/gi, "`")
-    .replace(/<\/code>/gi, "`")
-    .replace(/<strong>/gi, "*")
-    .replace(/<\/strong>/gi, "*")
-    .replace(/<em>/gi, "_")
-    .replace(/<\/em>/gi, "_")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ")
-    .trim();
-}
-
 // ---------------------------------------------------------------------------
-// Claude API — quiz generation
+// Claude CLI — combined quiz + insight generation
 // ---------------------------------------------------------------------------
 
-async function generateQuiz(conceptName, conceptSummary) {
-  const Anthropic = require("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function generateQuizAndInsight(quizConcept, insightConcept) {
+  const prompt = `Search the web for the latest AI news today. Then do two things:
 
-  const prompt = `You are a quiz master for an AI/ML learning journey. Generate a single multiple-choice question about the concept "${conceptName}".
+1. Generate a multiple-choice quiz question about the AI/ML concept "${quizConcept.name}".
+   Concept summary: ${quizConcept.summary}
+   The question should test genuine understanding, not trivia. Exactly 4 options numbered 1-4, exactly one correct.
 
-Concept summary: ${conceptSummary}
+2. Extract one surprising, specific, and memorable "Did you know?" fact about the concept "${insightConcept.name}".
+   It should be the kind of insight that makes someone stop and think.
 
-Rules:
-- The question should test genuine understanding, not trivia.
-- Exactly 4 answer options numbered 1-4.
-- Exactly one correct answer.
-- Return ONLY valid JSON with this schema (no markdown fences):
+Return ONLY valid JSON with this schema (no markdown fences, no extra text):
 {
-  "question": "...",
-  "options": ["option 1", "option 2", "option 3", "option 4"],
-  "correct": 2,
-  "explanation": "Short 1-sentence explanation of why the correct answer is right."
+  "quiz": {
+    "question": "...",
+    "options": ["option 1", "option 2", "option 3", "option 4"],
+    "correct": 2,
+    "explanation": "Short 1-sentence explanation of why the correct answer is right."
+  },
+  "insight": "The surprising fact in 1-2 sentences. No labels or prefixes."
 }`;
 
-  const response = await client.messages.create({
-    model: "claude-opus-4-6",
-    max_tokens: 512,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const text = response.content[0].text.trim();
+  const raw = askClaude(prompt);
 
   // Parse JSON — handle potential markdown fences from the model
-  const jsonStr = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+  const jsonStr = raw.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
 
   try {
     return JSON.parse(jsonStr);
   } catch (err) {
-    console.error("Failed to parse quiz JSON from Claude:", text);
+    console.error("Failed to parse quiz+insight JSON from Claude:", raw);
     throw new Error(`Quiz generation returned invalid JSON: ${err.message}`);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Claude API — AI insight generation
-// ---------------------------------------------------------------------------
-
-async function generateInsight(conceptName, conceptContent) {
-  const Anthropic = require("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  // Truncate content to avoid token bloat — 1500 chars is plenty for context
-  const truncatedContent = stripHtml(conceptContent).slice(0, 1500);
-
-  const prompt = `Extract one surprising, specific, and memorable "Did you know?" fact from this AI/ML concept.
-It should be the kind of insight that makes someone stop and think.
-
-Concept: ${conceptName}
-Content: ${truncatedContent}
-
-Return ONLY the insight text in 1-2 sentences. No labels, no "Did you know?" prefix — just the fact.`;
-
-  const response = await client.messages.create({
-    model: "claude-opus-4-6",
-    max_tokens: 200,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  return response.content[0].text.trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -225,6 +223,30 @@ function formatDailyMessage({ quiz, quizConcept, insight, progress, totalConcept
 }
 
 // ---------------------------------------------------------------------------
+// Quiz validation
+// ---------------------------------------------------------------------------
+
+function validateQuiz(quiz) {
+  if (!quiz || !quiz.question) {
+    console.log("VALIDATION FAILED: No question in quiz");
+    return false;
+  }
+  if (!quiz.question.includes("?")) {
+    console.log("VALIDATION FAILED: Question missing question mark");
+    return false;
+  }
+  if (!Array.isArray(quiz.options) || quiz.options.length !== 4) {
+    console.log("VALIDATION FAILED: Quiz does not have exactly 4 options");
+    return false;
+  }
+  if (typeof quiz.correct !== "number" || quiz.correct < 1 || quiz.correct > 4) {
+    console.log("VALIDATION FAILED: Invalid correct answer index");
+    return false;
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Twilio WhatsApp sender
 // ---------------------------------------------------------------------------
 
@@ -240,12 +262,16 @@ async function sendWhatsApp(body) {
     ? process.env.MY_WHATSAPP_NUMBER
     : `whatsapp:${process.env.MY_WHATSAPP_NUMBER}`;
 
-  console.log(`Sending WhatsApp message (${body.length} chars)...`);
+  // Truncate if over WhatsApp limit
+  const truncated = body.length > 1600 ? body.slice(0, 1597) + "..." : body;
+
+  const estCost = "$0.005";
+  console.log(`Sending WhatsApp message (${truncated.length} chars, est. cost: ${estCost})...`);
 
   const message = await client.messages.create({
     from: fromNumber,
     to: toNumber,
-    body,
+    body: truncated,
   });
 
   console.log(`Message sent. SID: ${message.sid}, Status: ${message.status}`);
@@ -277,6 +303,12 @@ async function main() {
   const progress = loadProgress();
   console.log(`Loaded ${concepts.length} concepts, ${progress.learnedConcepts.length} learned.`);
 
+  // Skip if no progress yet
+  if (!progress.learnedConcepts || progress.learnedConcepts.length === 0) {
+    console.log("No progress yet — skipping daily quiz (learnedConcepts is empty).");
+    return;
+  }
+
   // Pick a concept for the quiz — prefer learned concepts, fall back to any
   let quizPool = concepts;
   if (progress.learnedConcepts.length > 0) {
@@ -293,17 +325,23 @@ async function main() {
   const insightConcept = pickRandom(insightPool);
   console.log(`Insight concept: "${insightConcept.name}"`);
 
-  // Generate quiz and insight in parallel
-  console.log("Generating quiz question and insight via Claude Haiku...");
-  const [quiz, insight] = await Promise.all([
-    generateQuiz(quizConcept.name, quizConcept.summary),
-    generateInsight(insightConcept.name, insightConcept.content),
-  ]);
+  // Generate quiz and insight in a single Claude CLI call (saves cost, combines into one message)
+  console.log("Generating quiz question and insight via Claude Code CLI...");
+  const result = generateQuizAndInsight(quizConcept, insightConcept);
+
+  const quiz = result.quiz;
+  const insight = result.insight;
 
   console.log(`Quiz generated: "${quiz.question.slice(0, 60)}..."`);
   console.log(`Insight generated: "${insight.slice(0, 60)}..."`);
 
-  // Format and send
+  // Validate quiz structure
+  if (!validateQuiz(quiz)) {
+    console.log("Quiz validation failed — not sending. Saving Twilio credits.");
+    return;
+  }
+
+  // Format the combined message (quiz + insight in ONE WhatsApp message)
   const message = formatDailyMessage({
     quiz,
     quizConcept: quizConcept.name,
@@ -311,6 +349,12 @@ async function main() {
     progress,
     totalConcepts: concepts.length,
   });
+
+  // Validate final message content
+  if (!validateMessage(message)) {
+    console.log("Message validation failed — not sending. Saving Twilio credits.");
+    return;
+  }
 
   console.log("\n--- Message Preview ---");
   console.log(message);
