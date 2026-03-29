@@ -16,7 +16,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Send daily WhatsApp quiz
         run: node scripts/daily-whatsapp.js
