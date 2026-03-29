@@ -132,7 +132,7 @@ async function scanAINews(projects, conceptNames) {
   const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro-preview-05-06",
+    model: "gemini-2.5-flash-preview-05-20",
     tools: [{ googleSearch: {} }], // Enable Google Search grounding for real-time results
   });
 
