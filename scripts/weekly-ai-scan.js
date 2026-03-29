@@ -48,7 +48,7 @@ function validateEnv() {
 function askClaude(prompt, maxTokens = 4096) {
   const escaped = prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n');
   const result = execSync(
-    `claude -p "${escaped}" --output-format text --max-turns 10`,
+    `claude -p "${escaped}" --output-format text --max-turns 10 --allowedTools "WebSearch,WebFetch"`,
     {
       encoding: "utf-8",
       timeout: 120000, // 2 min timeout
