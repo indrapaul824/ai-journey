@@ -15,7 +15,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
+const Anthropic = require("@anthropic-ai/sdk");
 
 // ---------------------------------------------------------------------------
 // Config & validation
@@ -39,20 +39,17 @@ function validateEnv() {
 }
 
 // ---------------------------------------------------------------------------
-// Claude CLI helper
+// Anthropic API helper
 // ---------------------------------------------------------------------------
 
-function askClaude(prompt, maxTokens = 4096) {
-  const escaped = prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n');
-  const result = execSync(
-    `claude -p "${escaped}" --output-format text --max-turns 10 --allowedTools "WebSearch,WebFetch"`,
-    {
-      encoding: "utf-8",
-      timeout: 120000, // 2 min timeout
-      env: { ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY },
-    }
-  );
-  return result.trim();
+async function askClaude(prompt, maxTokens = 1024) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const response = await client.messages.create({
+    model: "claude-opus-4-6",
+    max_tokens: maxTokens,
+    messages: [{ role: "user", content: prompt }],
+  });
+  return response.content[0].text.trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -154,8 +151,8 @@ function today() {
 // Claude CLI — combined quiz + insight generation
 // ---------------------------------------------------------------------------
 
-function generateQuizAndInsight(quizConcept, insightConcept) {
-  const prompt = `Search the web for the latest AI news today. Then do two things:
+async function generateQuizAndInsight(quizConcept, insightConcept) {
+  const prompt = `You are a quiz generator for an AI learning journey. Do two things:
 
 1. Generate a multiple-choice quiz question about the AI/ML concept "${quizConcept.name}".
    Concept summary: ${quizConcept.summary}
@@ -175,7 +172,7 @@ Return ONLY valid JSON with this schema (no markdown fences, no extra text):
   "insight": "The surprising fact in 1-2 sentences. No labels or prefixes."
 }`;
 
-  const raw = askClaude(prompt);
+  const raw = await askClaude(prompt);
 
   // Parse JSON — handle potential markdown fences from the model
   const jsonStr = raw.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
@@ -326,8 +323,8 @@ async function main() {
   console.log(`Insight concept: "${insightConcept.name}"`);
 
   // Generate quiz and insight in a single Claude CLI call (saves cost, combines into one message)
-  console.log("Generating quiz question and insight via Claude Code CLI...");
-  const result = generateQuizAndInsight(quizConcept, insightConcept);
+  console.log("Generating quiz question and insight via Claude API...");
+  const result = await generateQuizAndInsight(quizConcept, insightConcept);
 
   const quiz = result.quiz;
   const insight = result.insight;

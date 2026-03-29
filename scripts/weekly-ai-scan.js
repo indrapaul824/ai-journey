@@ -2,14 +2,13 @@
  * Weekly AI Scan — sends a WhatsApp digest of AI developments relevant to
  * the learning journey. Optionally creates GitHub Issues for high-relevance items.
  *
- * Uses Claude Code CLI (`claude -p`) for generation, giving Claude full tool access
- * including WebSearch for real-time AI news.
+ * Uses Gemini 2.5 Pro with Google Search grounding for real-time web search + reasoning.
  *
  * Runs via GitHub Actions cron every Sunday at 8:30 AM IST.
  *
  * Required env vars:
  *   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM,
- *   MY_WHATSAPP_NUMBER, ANTHROPIC_API_KEY
+ *   MY_WHATSAPP_NUMBER, GOOGLE_AI_API_KEY
  * Optional:
  *   GITHUB_TOKEN — needed to create GitHub Issues for high-relevance items
  *   GITHUB_REPOSITORY — set automatically in GitHub Actions (owner/repo)
@@ -18,6 +17,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // ---------------------------------------------------------------------------
 // Config
@@ -30,7 +30,7 @@ const REQUIRED_ENV = [
   "TWILIO_AUTH_TOKEN",
   "TWILIO_WHATSAPP_FROM",
   "MY_WHATSAPP_NUMBER",
-  "ANTHROPIC_API_KEY",
+  "GOOGLE_AI_API_KEY",
 ];
 
 function validateEnv() {
@@ -39,23 +39,6 @@ function validateEnv() {
     console.error(`Missing required environment variables: ${missing.join(", ")}`);
     process.exit(1);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Claude CLI helper
-// ---------------------------------------------------------------------------
-
-function askClaude(prompt, maxTokens = 4096) {
-  const escaped = prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n');
-  const result = execSync(
-    `claude -p "${escaped}" --output-format text --max-turns 10 --allowedTools "WebSearch,WebFetch"`,
-    {
-      encoding: "utf-8",
-      timeout: 120000, // 2 min timeout
-      env: { ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY },
-    }
-  );
-  return result.trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -69,7 +52,7 @@ function validateMessage(message) {
     message.includes("I cannot") ||
     message.includes("I don't have access")
   ) {
-    console.log("VALIDATION FAILED: Claude returned an error/disclaimer instead of content");
+    console.log("VALIDATION FAILED: Model returned an error/disclaimer instead of content");
     return false;
   }
   // Must be reasonable length (not too short)
@@ -142,13 +125,20 @@ function loadProgress() {
 }
 
 // ---------------------------------------------------------------------------
-// Claude CLI — AI news scan (with WebSearch)
+// Gemini with Search Grounding — AI news scan
 // ---------------------------------------------------------------------------
 
-function scanAINews(projects, conceptNames) {
+async function scanAINews(projects, conceptNames) {
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-pro-preview-06-05",
+    tools: [{ googleSearch: {} }], // Enable Google Search grounding for real-time results
+  });
+
   const projectSummaries = projects
     .map((p) => `  Project ${p.number}: ${p.title} (${p.phase}) — ${p.status}`)
-    .join("\\n");
+    .join("\n");
 
   const conceptList = conceptNames.slice(0, 50).join(", "); // limit to avoid token overflow
 
@@ -188,7 +178,10 @@ Return ONLY valid JSON (no markdown fences, no extra text):
   "overallAssessment": "One sentence on whether the curriculum needs any changes this week."
 }`;
 
-  const raw = askClaude(prompt);
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text().trim();
+
+  // Strip any markdown fences the model may have added
   const jsonStr = raw.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
 
   try {
@@ -398,9 +391,9 @@ async function main() {
   const progress = loadProgress();
   console.log(`Loaded ${projects.length} projects, ${conceptNames.length} concepts.`);
 
-  // Scan for AI developments via Claude Code CLI (with WebSearch)
-  console.log("Scanning for AI developments via Claude Code CLI (with WebSearch)...");
-  const scanResult = scanAINews(projects, conceptNames);
+  // Scan for AI developments via Gemini with Google Search grounding
+  console.log("Scanning for AI developments via Gemini 2.5 Pro with Search grounding...");
+  const scanResult = await scanAINews(projects, conceptNames);
   console.log(`Found ${scanResult.developments.length} developments.`);
 
   for (const dev of scanResult.developments) {
