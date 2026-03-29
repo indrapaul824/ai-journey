@@ -1706,6 +1706,76 @@ a:hover { text-decoration: underline }
 }
 
 /* =======================================================
+   DAILY QUIZ CARD
+   ======================================================= */
+.bento-quiz { grid-column: 1 / -1; grid-row: 4 }
+
+.quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px }
+.quiz-header-left { display: flex; align-items: center; gap: 8px }
+.quiz-header-left .bento-card-label { margin-bottom: 0 }
+.quiz-streak { font-family: 'JetBrains Mono', monospace; font-size: .78rem; font-weight: 500; color: var(--accent); background: var(--accent-light); padding: 4px 10px; border-radius: 20px }
+.quiz-score { font-family: 'JetBrains Mono', monospace; font-size: .82rem; color: var(--text-2); margin-bottom: 12px }
+
+.quiz-empty { color: var(--text-2); font-size: .88rem; text-align: center; padding: 32px 16px }
+.quiz-empty-icon { font-size: 2rem; margin-bottom: 8px }
+
+.quiz-questions { display: flex; flex-direction: column; gap: 16px }
+.quiz-question { background: var(--bg); border: 1px solid var(--border-subtle); border-radius: var(--radius-inner); padding: 20px; transition: border-color var(--transition) }
+.quiz-question.answered-correct { border-color: #059669 }
+.quiz-question.answered-wrong { border-color: #dc2626 }
+
+.quiz-q-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px }
+.quiz-q-num { font-family: 'JetBrains Mono', monospace; font-size: .7rem; font-weight: 600; color: var(--text-3); background: var(--border-subtle); padding: 2px 8px; border-radius: 8px }
+.quiz-q-type { font-size: .7rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em }
+.quiz-q-text { font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 500; color: var(--text); margin-bottom: 14px; line-height: 1.4 }
+
+.quiz-options { display: flex; flex-direction: column; gap: 8px }
+.quiz-option { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-inner); cursor: pointer; transition: all var(--transition); font-size: .88rem; color: var(--text); background: var(--surface) }
+.quiz-option:hover:not(.disabled) { border-color: var(--accent); background: var(--accent-light) }
+.quiz-option .opt-letter { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: .78rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: var(--border-subtle); color: var(--text-2); flex-shrink: 0 }
+.quiz-option.selected { border-color: var(--accent); background: var(--accent-light) }
+.quiz-option.selected .opt-letter { background: var(--accent); color: #fff }
+.quiz-option.correct { border-color: #059669; background: rgba(5,150,105,.08) }
+.quiz-option.correct .opt-letter { background: #059669; color: #fff }
+.quiz-option.wrong { border-color: #dc2626; background: rgba(220,38,38,.08) }
+.quiz-option.wrong .opt-letter { background: #dc2626; color: #fff }
+.quiz-option.disabled { cursor: default; opacity: .85 }
+.quiz-option.disabled:hover { border-color: var(--border); background: var(--surface) }
+.quiz-option.correct.disabled:hover { border-color: #059669; background: rgba(5,150,105,.08) }
+.quiz-option.wrong.disabled:hover { border-color: #dc2626; background: rgba(220,38,38,.08) }
+
+.quiz-explanation { margin-top: 12px; padding: 10px 14px; background: var(--border-subtle); border-radius: var(--radius-inner); font-size: .82rem; color: var(--text-2); line-height: 1.5; display: none }
+.quiz-explanation.visible { display: block }
+
+.quiz-complete { text-align: center; padding: 20px; margin-top: 8px }
+.quiz-complete-score { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--text); margin-bottom: 4px }
+.quiz-complete-msg { font-size: .88rem; color: var(--text-2) }
+
+.quiz-settings-btn { background: none; border: none; cursor: pointer; color: var(--text-3); padding: 4px; border-radius: 6px; transition: color var(--transition) }
+.quiz-settings-btn:hover { color: var(--text) }
+
+/* Settings Modal */
+.settings-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; display: none; align-items: center; justify-content: center }
+.settings-overlay.open { display: flex }
+.settings-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; max-width: 440px; width: 90%; box-shadow: var(--shadow-lg) }
+.settings-modal h3 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; margin-bottom: 16px }
+.settings-modal label { display: block; font-size: .82rem; color: var(--text-2); margin-bottom: 6px }
+.settings-modal input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-inner); background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: .82rem }
+.settings-modal input:focus { outline: none; border-color: var(--accent) }
+.settings-modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end }
+.settings-modal-actions button { padding: 8px 16px; border-radius: var(--radius-inner); font-size: .82rem; font-weight: 500 }
+.settings-btn-save { background: var(--accent); color: #fff }
+.settings-btn-save:hover { background: var(--accent-hover) }
+.settings-btn-cancel { background: var(--border-subtle); color: var(--text-2) }
+.settings-btn-cancel:hover { background: var(--border) }
+.settings-hint { font-size: .72rem; color: var(--text-3); margin-top: 8px }
+
+/* Quiz confetti */
+@keyframes quiz-confetti-fall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1 } 100% { transform: translateY(60px) rotate(360deg); opacity: 0 } }
+.quiz-confetti-container { position: relative; overflow: hidden; pointer-events: none }
+.quiz-confetti { position: absolute; top: 0; width: 8px; height: 8px; border-radius: 2px; animation: quiz-confetti-fall 1.2s ease-out forwards }
+
+/* =======================================================
    RESPONSIVE
    ======================================================= */
 @media(max-width: 768px) {
@@ -1720,6 +1790,7 @@ a:hover { text-decoration: underline }
   .bento-recent { grid-column: 1; grid-row: auto }
   .bento-stats-row { grid-column: 1; grid-row: auto }
   .bento-journey { grid-column: 1; grid-row: auto }
+  .bento-quiz { grid-column: 1; grid-row: auto }
   .progress-row { grid-template-columns: 1fr }
   .prereq-grid { grid-template-columns: 1fr }
   .resources-grid { grid-template-columns: 1fr }
@@ -1749,6 +1820,18 @@ a:hover { text-decoration: underline }
   </main>
 </div>
 <div class="toast" id="toast"></div>
+<div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-modal">
+    <h3>Quiz Settings</h3>
+    <label for="quiz-api-key-input">Anthropic API Key (optional)</label>
+    <input type="password" id="quiz-api-key-input" placeholder="sk-ant-..." autocomplete="off">
+    <div class="settings-hint">Enables AI-generated quiz questions via Claude Haiku. Key is stored locally and never synced.</div>
+    <div class="settings-modal-actions">
+      <button class="settings-btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="settings-btn-save" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
 <script>
 /* ═══════════════════════════════════════════════════
    CONCEPT DATA (99 concepts from concepts-merged.json)
@@ -6022,6 +6105,7 @@ function loadState() {
       if (!s.statuses) s.statuses = s.st || {};
       if (!s.learnedAt) s.learnedAt = {};
       if (!s.milestones) s.milestones = {};
+      if (!s.quiz) s.quiz = { today: null, questions: [], answers: [null, null, null], streak: 0, lastQuizDate: null, history: {} };
       return s;
     }
   } catch(e) {}
@@ -6029,10 +6113,10 @@ function loadState() {
     const old = localStorage.getItem('aij2');
     if (old) {
       const s = JSON.parse(old);
-      return { learned: s.l || {}, statuses: s.st || {}, learnedAt: {}, activeProject: null, milestones: {} };
+      return { learned: s.l || {}, statuses: s.st || {}, learnedAt: {}, activeProject: null, milestones: {}, quiz: { today: null, questions: [], answers: [null, null, null], streak: 0, lastQuizDate: null, history: {} } };
     }
   } catch(e) {}
-  return { learned: {}, statuses: {}, learnedAt: {}, activeProject: null, milestones: {} };
+  return { learned: {}, statuses: {}, learnedAt: {}, activeProject: null, milestones: {}, quiz: { today: null, questions: [], answers: [null, null, null], streak: 0, lastQuizDate: null, history: {} } };
 }
 
 function saveState() {
@@ -6331,6 +6415,7 @@ function getNextConceptInOrder(proj) {
    RENDER: DASHBOARD
    ═══════════════════════════════════════════════════ */
 function renderDashboard() {
+  ensureDailyQuiz();
   const total = totalConcepts();
   const learned = learnedCount();
   const pct = total ? Math.round(learned / total * 100) : 0;
@@ -6463,9 +6548,23 @@ function renderDashboard() {
         <div class="journey-node-label">${item.project.title}</div>
       </div>`;
   });
-  html += '</div></div></div></div>';
+  html += '</div></div></div>';
+
+  // Daily Quiz Card
+  const quizStreak = state.quiz.streak || 0;
+  html += '<div class="bento-card bento-quiz quiz-confetti-container">';
+  html += '<div class="quiz-header"><div class="quiz-header-left"><div class="bento-card-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Daily Quiz</div>';
+  if (quizStreak > 0) html += `<span class="quiz-streak">&#128293; ${quizStreak}-day streak</span>`;
+  html += '</div>';
+  html += '<button class="quiz-settings-btn" onclick="openSettings()" title="Quiz settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>';
+  html += '</div>';
+  html += '<div id="quiz-card-content"></div>';
+  html += '</div>';
+
+  html += '</div>'; /* close bento */
 
   document.getElementById('view-dashboard').innerHTML = html;
+  renderQuizCard();
 }
 
 /* ═══════════════════════════════════════════════════
@@ -9206,6 +9305,349 @@ function renderBuildGuideSection(slug, guide, phaseColor) {
   html += `</div>`; /* close build-guide-timeline */
   html += `</div>`; /* close build-guide-section */
   return html;
+}
+
+/* ═══════════════════════════════════════════════════
+   DAILY QUIZ SYSTEM
+   ═══════════════════════════════════════════════════ */
+const QUIZ_TYPES = [
+  { type: 'definition', template: 'What best describes "{concept}"?' },
+  { type: 'why_it_matters', template: 'Why is "{concept}" important in AI/ML?' },
+  { type: 'connection', template: 'Which concept is most closely related to "{concept}"?' },
+  { type: 'application', template: 'In which scenario would you most likely apply "{concept}"?' }
+];
+
+// Deterministic seeded random from date string
+function seededRandom(seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) { h = ((h << 5) - h + seed.charCodeAt(i)) | 0; }
+  return function() { h = (h * 16807 + 0) % 2147483647; return (h & 0x7fffffff) / 2147483647; };
+}
+
+function shuffleWithSeed(arr, rng) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getLearnedConcepts() {
+  const learned = [];
+  PHASES.forEach(ph => ph.projects.forEach(p => p.cats.forEach(cat =>
+    cat.pills.forEach(pill => {
+      if (state.learned[pill.name] && CONCEPTS[pill.name]) {
+        learned.push({ name: pill.name, summary: CONCEPTS[pill.name].summary, category: cat.label });
+      }
+    })
+  )));
+  return learned;
+}
+
+function selectQuizConcepts(learnedConcepts, count, rng) {
+  if (learnedConcepts.length <= count) return learnedConcepts;
+  const now = Date.now();
+  const hist = state.quiz.history || {};
+  const scored = learnedConcepts.map(c => {
+    const h = hist[c.name];
+    if (!h) {
+      const learnedAgo = now - (state.learnedAt[c.name] || now);
+      return { concept: c, priority: learnedAgo > 3 * 86400000 ? 100 : 50 };
+    }
+    if (h.wrongCount > h.correctCount) return { concept: c, priority: 80 };
+    const daysSinceQuiz = (now - h.lastQuizzed) / 86400000;
+    if (daysSinceQuiz > 7) return { concept: c, priority: 60 };
+    return { concept: c, priority: 10 + rng() * 20 };
+  });
+  scored.sort((a, b) => b.priority - a.priority);
+  // Take top candidates with some randomness
+  const top = scored.slice(0, Math.min(count * 3, scored.length));
+  return shuffleWithSeed(top, rng).slice(0, count).map(s => s.concept);
+}
+
+function generateTemplateQuestions(learnedConcepts, count) {
+  const seed = new Date().toDateString();
+  const rng = seededRandom(seed);
+  const selected = selectQuizConcepts(learnedConcepts, count, rng);
+  const allConcepts = learnedConcepts;
+  const questions = [];
+
+  selected.forEach((concept, idx) => {
+    const typeIdx = Math.floor(rng() * QUIZ_TYPES.length);
+    const qType = QUIZ_TYPES[typeIdx];
+    const question = qType.template.replace('{concept}', concept.name);
+    let correctAnswer, distractors, explanation;
+
+    if (qType.type === 'definition') {
+      correctAnswer = concept.summary;
+      explanation = `"${concept.name}" — ${concept.summary}`;
+      distractors = shuffleWithSeed(
+        allConcepts.filter(c => c.name !== concept.name), rng
+      ).slice(0, 3).map(c => c.summary);
+    } else if (qType.type === 'why_it_matters') {
+      correctAnswer = concept.summary;
+      explanation = `${concept.name} matters because: ${concept.summary}`;
+      distractors = shuffleWithSeed(
+        allConcepts.filter(c => c.name !== concept.name), rng
+      ).slice(0, 3).map(c => c.summary);
+    } else if (qType.type === 'connection') {
+      const sameCategory = allConcepts.filter(c => c.name !== concept.name && c.category === concept.category);
+      const diffCategory = allConcepts.filter(c => c.category !== concept.category);
+      if (sameCategory.length > 0 && diffCategory.length >= 3) {
+        const related = sameCategory[Math.floor(rng() * sameCategory.length)];
+        correctAnswer = related.name;
+        explanation = `Both "${concept.name}" and "${related.name}" belong to the ${concept.category} category.`;
+        distractors = shuffleWithSeed(diffCategory, rng).slice(0, 3).map(c => c.name);
+      } else {
+        // Fallback to definition type
+        correctAnswer = concept.summary;
+        explanation = `"${concept.name}" — ${concept.summary}`;
+        distractors = shuffleWithSeed(
+          allConcepts.filter(c => c.name !== concept.name), rng
+        ).slice(0, 3).map(c => c.summary);
+      }
+    } else {
+      // application — use summary as the correct scenario
+      const scenarioPrefix = 'When you need to: ';
+      correctAnswer = concept.summary;
+      explanation = `You would apply "${concept.name}" because: ${concept.summary}`;
+      distractors = shuffleWithSeed(
+        allConcepts.filter(c => c.name !== concept.name), rng
+      ).slice(0, 3).map(c => c.summary);
+    }
+
+    // Ensure we have exactly 3 distractors; pad if needed
+    while (distractors.length < 3) {
+      distractors.push('This concept is unrelated to the question.');
+    }
+
+    const options = shuffleWithSeed([correctAnswer, ...distractors], rng);
+    const correctIdx = options.indexOf(correctAnswer);
+    questions.push({
+      concept: concept.name,
+      type: qType.type,
+      question,
+      options,
+      correctIdx,
+      explanation
+    });
+  });
+
+  return questions;
+}
+
+// LLM integration placeholder
+const QUIZ_API_KEY = localStorage.getItem('quiz-api-key') || null;
+
+async function generateLLMQuestions(learnedConcepts, count) {
+  const apiKey = localStorage.getItem('quiz-api-key');
+  if (!apiKey) return generateTemplateQuestions(learnedConcepts, count);
+
+  const seed = new Date().toDateString();
+  const rng = seededRandom(seed);
+  const selected = selectQuizConcepts(learnedConcepts, count, rng);
+  const conceptNames = selected.map(c => c.name);
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'content-type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: `Generate ${count} multiple-choice quiz questions to test understanding of these AI/ML concepts: ${conceptNames.join(', ')}. One question per concept. Each question should have 4 options (A-D) with one correct answer and a brief explanation. Return ONLY a JSON array with objects: {"concept":"...","type":"definition","question":"...","options":["A","B","C","D"],"correctIdx":0,"explanation":"..."}`
+        }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+  } catch(e) {
+    console.warn('LLM quiz generation failed, falling back to templates:', e);
+  }
+  return generateTemplateQuestions(learnedConcepts, count);
+}
+
+function ensureDailyQuiz() {
+  const today = new Date().toDateString();
+  if (state.quiz.today === today && state.quiz.questions.length > 0) return;
+
+  // Update streak
+  if (state.quiz.lastQuizDate) {
+    const last = new Date(state.quiz.lastQuizDate);
+    const now = new Date(today);
+    const diffDays = Math.round((now - last) / 86400000);
+    if (diffDays === 1 && state.quiz.answers.every(a => a !== null)) {
+      state.quiz.streak = (state.quiz.streak || 0) + 1;
+    } else if (diffDays > 1) {
+      state.quiz.streak = 0;
+    }
+  }
+
+  const learned = getLearnedConcepts();
+  if (learned.length < 4) {
+    state.quiz.today = today;
+    state.quiz.questions = [];
+    state.quiz.answers = [null, null, null];
+    saveState();
+    return;
+  }
+
+  const questions = generateTemplateQuestions(learned, 3);
+  state.quiz.today = today;
+  state.quiz.questions = questions;
+  state.quiz.answers = [null, null, null];
+  state.quiz.lastQuizDate = today;
+  saveState();
+
+  // If API key is set, try LLM generation in background and replace
+  if (localStorage.getItem('quiz-api-key')) {
+    generateLLMQuestions(learned, 3).then(llmQ => {
+      if (llmQ && llmQ.length === 3 && state.quiz.answers.every(a => a === null)) {
+        state.quiz.questions = llmQ;
+        saveState();
+        if (currentView === 'dashboard') renderDashboard();
+      }
+    });
+  }
+}
+
+function answerQuiz(questionIdx, optionIdx) {
+  if (state.quiz.answers[questionIdx] !== null) return;
+  state.quiz.answers[questionIdx] = optionIdx;
+
+  const q = state.quiz.questions[questionIdx];
+  const isCorrect = optionIdx === q.correctIdx;
+
+  // Update per-concept history
+  if (!state.quiz.history) state.quiz.history = {};
+  if (!state.quiz.history[q.concept]) {
+    state.quiz.history[q.concept] = { lastQuizzed: Date.now(), correctCount: 0, wrongCount: 0 };
+  }
+  const h = state.quiz.history[q.concept];
+  h.lastQuizzed = Date.now();
+  if (isCorrect) h.correctCount++; else h.wrongCount++;
+
+  saveState();
+  renderQuizCard();
+
+  // Check if all answered — trigger confetti if perfect
+  if (state.quiz.answers.every(a => a !== null)) {
+    const correct = state.quiz.answers.filter((a, i) => a === state.quiz.questions[i].correctIdx).length;
+    if (correct === 3) {
+      setTimeout(() => triggerQuizConfetti(), 300);
+    }
+  }
+}
+
+function triggerQuizConfetti() {
+  const container = document.querySelector('.bento-quiz');
+  if (!container) return;
+  const colors = ['#f97316', '#059669', '#7c3aed', '#2563eb', '#d97706'];
+  for (let i = 0; i < 24; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'quiz-confetti';
+    confetti.style.left = (Math.random() * 100) + '%';
+    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animationDelay = (Math.random() * 0.6) + 's';
+    confetti.style.animationDuration = (0.8 + Math.random() * 0.8) + 's';
+    container.appendChild(confetti);
+    setTimeout(() => confetti.remove(), 2000);
+  }
+}
+
+function renderQuizCard() {
+  const el = document.getElementById('quiz-card-content');
+  if (!el) return;
+
+  ensureDailyQuiz();
+
+  const learned = getLearnedConcepts();
+  if (learned.length < 4) {
+    el.innerHTML = '<div class="quiz-empty"><div class="quiz-empty-icon">&#129504;</div>Learn your first concepts to unlock daily quizzes<br><span style="font-size:.76rem;color:var(--text-3)">At least 4 learned concepts needed</span></div>';
+    return;
+  }
+
+  const q = state.quiz.questions;
+  if (!q || q.length === 0) return;
+
+  const answeredCount = state.quiz.answers.filter(a => a !== null).length;
+  const correctCount = state.quiz.answers.filter((a, i) => a !== null && q[i] && a === q[i].correctIdx).length;
+  const allAnswered = answeredCount === 3;
+
+  let html = '';
+  if (allAnswered) {
+    html += `<div class="quiz-score">${correctCount}/3 correct today</div>`;
+  } else {
+    html += `<div class="quiz-score">${answeredCount}/3 answered</div>`;
+  }
+
+  html += '<div class="quiz-questions">';
+  q.forEach((question, idx) => {
+    const userAnswer = state.quiz.answers[idx];
+    const isAnswered = userAnswer !== null;
+    const isCorrect = isAnswered && userAnswer === question.correctIdx;
+    const cardClass = isAnswered ? (isCorrect ? 'answered-correct' : 'answered-wrong') : '';
+
+    html += `<div class="quiz-question ${cardClass}">`;
+    html += `<div class="quiz-q-header"><span class="quiz-q-num">${idx + 1}/3</span><span class="quiz-q-type">${question.type.replace(/_/g, ' ')}</span></div>`;
+    html += `<div class="quiz-q-text">${question.question}</div>`;
+    html += '<div class="quiz-options">';
+
+    const letters = ['A', 'B', 'C', 'D'];
+    question.options.forEach((opt, optIdx) => {
+      let cls = 'quiz-option';
+      if (isAnswered) {
+        cls += ' disabled';
+        if (optIdx === question.correctIdx) cls += ' correct';
+        else if (optIdx === userAnswer && !isCorrect) cls += ' wrong';
+      }
+      const optText = opt.length > 120 ? opt.substring(0, 117) + '...' : opt;
+      html += `<div class="${cls}" onclick="${isAnswered ? '' : `answerQuiz(${idx},${optIdx})`}"><span class="opt-letter">${letters[optIdx]}</span><span>${optText}</span></div>`;
+    });
+    html += '</div>';
+
+    html += `<div class="quiz-explanation ${isAnswered ? 'visible' : ''}">${isAnswered ? (isCorrect ? '&#10003; Correct! ' : '&#10007; Incorrect. ') + question.explanation : ''}</div>`;
+    html += '</div>';
+  });
+  html += '</div>';
+
+  if (allAnswered) {
+    html += `<div class="quiz-complete"><div class="quiz-complete-score">${correctCount === 3 ? 'Perfect score!' : correctCount + '/3'}</div><div class="quiz-complete-msg">Come back tomorrow for new questions!</div></div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// Settings modal
+function openSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  const input = document.getElementById('quiz-api-key-input');
+  input.value = localStorage.getItem('quiz-api-key') || '';
+  overlay.classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function saveSettings() {
+  const key = document.getElementById('quiz-api-key-input').value.trim();
+  if (key) {
+    localStorage.setItem('quiz-api-key', key);
+  } else {
+    localStorage.removeItem('quiz-api-key');
+  }
+  closeSettings();
 }
 
 /* ═══════════════════════════════════════════════════

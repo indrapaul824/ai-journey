@@ -1,0 +1,13 @@
+{
+  "name": "ai-journey",
+  "private": true,
+  "scripts": {
+    "quiz": "node scripts/daily-whatsapp.js",
+    "scan": "node scripts/weekly-ai-scan.js"
+  },
+  "dependencies": {
+    "motion": "^12.38.0",
+    "twilio": "^5.0.0",
+    "@anthropic-ai/sdk": "^0.30.0"
+  }
+}

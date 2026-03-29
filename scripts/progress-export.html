@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Journey — Progress Export</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 640px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      background: #0d1117;
+      color: #c9d1d9;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.5rem; color: #58a6ff; }
+    p.desc { font-size: 0.9rem; color: #8b949e; margin-bottom: 1.5rem; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .card h2 { font-size: 1rem; margin-bottom: 0.8rem; color: #f0f6fc; }
+    .stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
+    .stat {
+      background: #0d1117;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      text-align: center;
+      flex: 1;
+    }
+    .stat .num { font-size: 1.5rem; font-weight: 700; color: #58a6ff; }
+    .stat .label { font-size: 0.75rem; color: #8b949e; }
+    textarea {
+      width: 100%;
+      height: 200px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.8rem;
+      padding: 0.8rem;
+      resize: vertical;
+    }
+    .actions { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+    button {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    .btn-primary { background: #238636; color: #fff; }
+    .btn-secondary { background: #30363d; color: #c9d1d9; }
+    .status {
+      margin-top: 0.8rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      display: none;
+    }
+    .status.success { display: block; background: #0d2818; color: #3fb950; border: 1px solid #238636; }
+    .status.error { display: block; background: #2d1117; color: #f85149; border: 1px solid #da3633; }
+    .status.info { display: block; background: #0d1d31; color: #58a6ff; border: 1px solid #1f6feb; }
+  </style>
+</head>
+<body>
+  <h1>AI Journey — Progress Export</h1>
+  <p class="desc">
+    Export your learning progress from localStorage so it can be committed as
+    <code>progress.json</code> and used by the daily WhatsApp quiz.
+  </p>
+
+  <div class="card">
+    <h2>Current Progress</h2>
+    <div class="stats">
+      <div class="stat">
+        <div class="num" id="learned-count">—</div>
+        <div class="label">Concepts Learned</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="streak-count">—</div>
+        <div class="label">Day Streak</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="total-count">—</div>
+        <div class="label">Total Concepts</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Exported JSON</h2>
+    <textarea id="json-output" readonly></textarea>
+    <div class="actions">
+      <button class="btn-primary" onclick="downloadJSON()">Download progress.json</button>
+      <button class="btn-secondary" onclick="copyJSON()">Copy to Clipboard</button>
+      <button class="btn-secondary" onclick="loadFromLocalStorage()">Refresh</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>Manual Import</h2>
+    <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 0.8rem;">
+      Paste a progress JSON to import into localStorage (e.g., from another device).
+    </p>
+    <textarea id="json-import" placeholder='{"learnedConcepts": ["Matrix Multiplication", ...], "streak": 5}'></textarea>
+    <div class="actions">
+      <button class="btn-secondary" onclick="importJSON()">Import to localStorage</button>
+    </div>
+    <div id="import-status" class="status"></div>
+  </div>
+
+  <script>
+    // localStorage keys used by the main AI Journey app.
+    // Adjust these if your app uses different keys.
+    const LS_KEYS = {
+      learned: "ai-journey-learned",       // array of concept names
+      streak: "ai-journey-streak",         // number
+      lastVisit: "ai-journey-last-visit",  // ISO date string
+    };
+
+    function getProgress() {
+      let learned = [];
+      let streak = 0;
+
+      try {
+        const raw = localStorage.getItem(LS_KEYS.learned);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          learned = Array.isArray(parsed) ? parsed : [];
+        }
+      } catch { /* ignore */ }
+
+      try {
+        const raw = localStorage.getItem(LS_KEYS.streak);
+        if (raw) streak = parseInt(raw, 10) || 0;
+      } catch { /* ignore */ }
+
+      // Also check common alternative key patterns
+      if (learned.length === 0) {
+        for (const key of Object.keys(localStorage)) {
+          if (key.includes("learned") || key.includes("progress") || key.includes("completed")) {
+            try {
+              const val = JSON.parse(localStorage.getItem(key));
+              if (Array.isArray(val) && val.length > learned.length) {
+                learned = val;
+              }
+            } catch { /* not JSON array, skip */ }
+          }
+        }
+      }
+
+      return { learnedConcepts: learned, streak };
+    }
+
+    function loadFromLocalStorage() {
+      const progress = getProgress();
+      const totalConcepts = 99; // from concepts-merged.json
+
+      const exportData = {
+        learnedConcepts: progress.learnedConcepts,
+        streak: progress.streak,
+        total: totalConcepts,
+        exportedAt: new Date().toISOString(),
+      };
+
+      document.getElementById("learned-count").textContent = progress.learnedConcepts.length;
+      document.getElementById("streak-count").textContent = progress.streak;
+      document.getElementById("total-count").textContent = totalConcepts;
+      document.getElementById("json-output").value = JSON.stringify(exportData, null, 2);
+
+      if (progress.learnedConcepts.length === 0) {
+        showStatus("status", "info",
+          "No learned concepts found in localStorage. If you have progress in the app, " +
+          "make sure you open this page from the same origin as the AI Journey app."
+        );
+      }
+    }
+
+    function downloadJSON() {
+      const json = document.getElementById("json-output").value;
+      if (!json) { showStatus("status", "error", "Nothing to download."); return; }
+
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "progress.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showStatus("status", "success", "Downloaded! Place this file in the repo root and commit it.");
+    }
+
+    function copyJSON() {
+      const textarea = document.getElementById("json-output");
+      navigator.clipboard.writeText(textarea.value).then(
+        () => showStatus("status", "success", "Copied to clipboard."),
+        () => {
+          textarea.select();
+          document.execCommand("copy");
+          showStatus("status", "success", "Copied to clipboard (fallback).");
+        }
+      );
+    }
+
+    function importJSON() {
+      const input = document.getElementById("json-import").value.trim();
+      if (!input) { showStatus("import-status", "error", "Paste JSON first."); return; }
+
+      try {
+        const data = JSON.parse(input);
+        const learned = data.learnedConcepts || data.learned || [];
+        const streak = data.streak || 0;
+
+        if (!Array.isArray(learned)) throw new Error("learnedConcepts must be an array");
+
+        localStorage.setItem(LS_KEYS.learned, JSON.stringify(learned));
+        localStorage.setItem(LS_KEYS.streak, String(streak));
+
+        showStatus("import-status", "success",
+          `Imported ${learned.length} concepts and streak of ${streak}. Refresh the main app to see changes.`
+        );
+        loadFromLocalStorage(); // refresh display
+      } catch (err) {
+        showStatus("import-status", "error", `Invalid JSON: ${err.message}`);
+      }
+    }
+
+    function showStatus(id, type, msg) {
+      const el = document.getElementById(id);
+      el.className = `status ${type}`;
+      el.textContent = msg;
+      if (type === "success") setTimeout(() => { el.style.display = "none"; }, 5000);
+    }
+
+    // Initialize on load
+    loadFromLocalStorage();
+  </script>
+</body>
+</html>
