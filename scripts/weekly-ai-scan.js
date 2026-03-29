@@ -148,7 +148,7 @@ Return ONLY valid JSON (no markdown fences):
 }`;
 
   const response = await client.messages.create({
-    model: "claude-haiku-4-20250414",
+    model: "claude-opus-4-6",
     max_tokens: 1024,
     messages: [{ role: "user", content: prompt }],
   });

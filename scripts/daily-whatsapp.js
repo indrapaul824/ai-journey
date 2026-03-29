@@ -144,7 +144,7 @@ Rules:
 }`;
 
   const response = await client.messages.create({
-    model: "claude-haiku-4-20250414",
+    model: "claude-opus-4-6",
     max_tokens: 512,
     messages: [{ role: "user", content: prompt }],
   });
@@ -182,7 +182,7 @@ Content: ${truncatedContent}
 Return ONLY the insight text in 1-2 sentences. No labels, no "Did you know?" prefix — just the fact.`;
 
   const response = await client.messages.create({
-    model: "claude-haiku-4-20250414",
+    model: "claude-opus-4-6",
     max_tokens: 200,
     messages: [{ role: "user", content: prompt }],
   });
